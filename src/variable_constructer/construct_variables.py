@@ -26,7 +26,7 @@ def construct_variables_df(trials)->pd.DataFrame:
     )
 
     trials["under_reliance_point"] = (
-            (trials["condition"].isin(["C1", "C2"])) &
+            (trials["condition"] <= 2) &
             (trials["final_agree_ai"] == 0) &
             (trials["pa_correct"] == 1)
     )
