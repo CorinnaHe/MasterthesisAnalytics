@@ -48,6 +48,18 @@ def _construct_reliance_metrics(trials: pd.DataFrame) -> pd.DataFrame:
     return trials
 
 
+def _construct_confidence_metrics(trials: pd.DataFrame) -> pd.DataFrame:
+    trials["delta_confidence"] = (
+            trials["final_confidence"] - trials["initial_confidence"]
+    ).astype(int)
+
+    trials["final_correct"] = (
+            trials["final_decision"] == trials["y_true"]
+    )
+
+    return trials
+
 def construct_variables_df(trials)->pd.DataFrame:
     trials = _construct_reliance_metrics(trials)
+    trials = _construct_confidence_metrics(trials)
     return trials
