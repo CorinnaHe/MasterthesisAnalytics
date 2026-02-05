@@ -1,5 +1,5 @@
-from .load_data import load_data
+from .load_data import load_experiement_data
 
 __all__ = [
-    "load_data",
+    "load_experiement_data",
 ]

@@ -114,7 +114,7 @@ def _filter_df(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def load_data(file_name: str):
+def load_experiement_data(file_name: str):
     df_raw = pd.read_csv(DATA_DIR / file_name)
     df_raw["consent.1.player.condition"] = 1 #TODO: remove with new csv
     df_raw = _filter_df(df_raw)
