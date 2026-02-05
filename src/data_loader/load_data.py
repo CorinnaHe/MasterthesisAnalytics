@@ -1,10 +1,7 @@
-from pathlib import Path
-
 import pandas as pd
 import re
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DATA_DIR = PROJECT_ROOT / "data"
+from config import RAW_DATA_DIR
 
 PLAYER_COLUMNS_TO_DROP = {
     "id_in_group",
@@ -114,8 +111,8 @@ def _filter_df(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def load_experiement_data(file_name: str):
-    df_raw = pd.read_csv(DATA_DIR / file_name)
+def load_experiment_data(file_name: str) -> pd.DataFrame:
+    df_raw = pd.read_csv(RAW_DATA_DIR / file_name)
     df_raw["consent.1.player.condition"] = 1 #TODO: remove with new csv
     df_raw = _filter_df(df_raw)
 
@@ -125,3 +122,18 @@ def load_experiement_data(file_name: str):
         _extract_trials(df_raw, "main_trials"),
         _extract_single_block(df_raw, "control_measures", "age"),
     )
+
+
+def load_page_time_data(file_name: str) -> pd.DataFrame:
+    df = pd.read_csv(RAW_DATA_DIR / file_name)
+
+    df = df.sort_values(
+        ["participant_code", "round_number", "page_index"]
+    )
+
+    df["page_time_sec"] = (
+        df.groupby(["participant_code", "round_number"])["epoch_time_completed"]
+        .diff()
+    )
+
+    return df

@@ -1,0 +1,7 @@
+session_code,participant_id_in_session,participant_code,page_index,app_name,page_name,epoch_time_completed,round_number,timeout_happened,is_wait_page
+i94z674k,2,boevm8gn,0,,InitializeParticipant,1770229874,1,0,0
+i94z674k,2,boevm8gn,1,consent,Consent,1770229878,1,0,0
+i94z674k,2,boevm8gn,2,instructions,TasksInstructions,1770229887,1,0,0
+i94z674k,2,boevm8gn,3,instructions,AIInstructions,1770229891,1,0,0
+i94z674k,2,boevm8gn,4,checks,Checks,1770229897,1,0,0
+i94z674k,2,boevm8gn,6,example_trials,PracticeIntro,1770229899,1,0,0
