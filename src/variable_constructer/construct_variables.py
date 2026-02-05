@@ -33,9 +33,13 @@ def _construct_reliance_metrics(trials: pd.DataFrame) -> pd.DataFrame:
     # reliance
     trials["over_reliance_pp"] = trials["final_agree_pp"] & ~trials["pp_correct"]
     trials["under_reliance_pp"] = ~trials["final_agree_pp"] & trials["pp_correct"]
+    trials["appropriate_reliance_pp"] = ((trials["final_agree_pp"] & trials["pp_correct"]) |
+                                         (~trials["final_agree_pp"] & ~trials["pp_correct"]))
 
     trials["over_reliance_set"] = trials["switched_to_set"] & ~trials["set_valid"]
     trials["under_reliance_set"] = ~trials["final_agree_set"] & trials["set_valid"]
+    trials["appropriate_reliance_set"] = ((trials["final_agree_set"] & trials["set_valid"]) |
+                                         (~trials["final_agree_set"] & ~trials["set_valid"]))
 
     return trials
 
