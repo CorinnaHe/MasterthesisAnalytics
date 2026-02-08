@@ -1,5 +1,6 @@
 import pandas as pd
 import re
+from functools import cache
 
 from config import RAW_DATA_DIR
 
@@ -111,9 +112,9 @@ def _filter_df(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+@cache
 def load_experiment_data(file_name: str) -> pd.DataFrame:
     df_raw = pd.read_csv(RAW_DATA_DIR / file_name)
-    df_raw["consent.1.player.condition"] = 1 #TODO: remove with new csv
     df_raw = _filter_df(df_raw)
 
     return (
