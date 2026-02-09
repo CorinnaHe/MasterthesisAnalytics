@@ -3,6 +3,27 @@ from inspect_data import inspect_page_times, inspect_h2, inspect_accuracy
 from variable_constructer import construct_variables_df
 from hypothesis_testing import test_h2
 
+import pandas as pd
+
+pd.set_option("display.max_columns", None)
+pd.set_option("display.width", None)
+pd.set_option("display.max_colwidth", None)
+
+
+def _accuracy(main_trials_df: pd.DataFrame):
+    inspect_accuracy(main_trials_df, "global")
+
+    point_trials = main_trials_df[main_trials_df["condition"].isin([1, 2])]
+    set_trials = main_trials_df[main_trials_df["condition"] == 3]
+    inspect_accuracy(point_trials, "point prediction")
+    inspect_accuracy(set_trials, "set prediction")
+
+    ai_wrong_cases = main_trials_df[main_trials_df["ai_correct"] == 0]
+    ai_correct_cases = main_trials_df[main_trials_df["ai_correct"] == 1]
+    inspect_accuracy(ai_wrong_cases, "ai wrong")
+    inspect_accuracy(ai_correct_cases, "ai correct")
+
+
 if __name__ == '__main__':
     experiment_date = "synthetic_experiment_data"
     (
@@ -20,12 +41,7 @@ if __name__ == '__main__':
     page_time_df = load_page_time_data(f"PageTimes-2026-02-05.csv")
     inspect_page_times(page_time_df)
 
-    point_trials = main_trials_df[main_trials_df["condition"].isin([1, 2])]
-    set_trials = main_trials_df[main_trials_df["condition"] == 3]
-    inspect_accuracy(point_trials, "point prediction")
-    inspect_accuracy(set_trials, "set prediction")
-    inspect_accuracy(main_trials_df, "global")
+    _accuracy(main_trials_df)
 
     inspect_h2(main_trials_df)
-
     test_h2(main_trials_df)
