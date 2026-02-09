@@ -78,8 +78,7 @@ def _construct_reliance_metrics(trials: pd.DataFrame) -> pd.DataFrame:
     trials["ai_correct"] = trials["ai_correct"].astype(bool)
 
     trials["appropriate_reliance"] = (
-        (trials["final_agree_ai"] & trials["ai_correct"]) |
-        ~(trials["final_agree_ai"] | trials["ai_correct"])
+        trials["final_agree_ai"] == trials["ai_correct"]
     ).astype(int)
 
     return trials
