@@ -1,6 +1,6 @@
 import pandas as pd
 
-from figures import plot_binary_stacked_bar
+from figures import plot_binary_stacked_bar, plot_box_with_jitter
 
 
 def _accuracy_metrics(x: pd.DataFrame) -> pd.Series:
@@ -63,44 +63,62 @@ def inspect_accuracy(trials: pd.DataFrame, label: str):
 
 def inspect_human_ai_match(trials: pd.DataFrame, label: str):
     print(f"\n=== Human AI match inspection: {label} ===")
+
+    # ------------------------------------------------------------------
+    # 1. Define decision labels ONCE (paper-aligned)
+    # ------------------------------------------------------------------
+    label_map = {
+        (1, 1): "Match\nSwitch",
+        (1, 0): "Match\nNot Switch",
+        (0, 1): "Mismatch\nSwitch",
+        (0, 0): "Mismatch\nNot Switch",
+    }
+
+    trials["decision_label"] = trials.apply(
+        lambda r: label_map[(r["initial_agree_ai"], r["switched"])],
+        axis=1
+    )
+
+    # ------------------------------------------------------------------
+    # 2. Switching behaviour (Figure 5c logic)
+    # ------------------------------------------------------------------
     switch_by_match = (
         trials
         .groupby("initial_agree_ai")["switched"]
         .value_counts()
         .unstack(fill_value=0)
     )
-    print("\nSwitching behaviour when users initial agreed with AI")
+
+    print("\nSwitching behaviour by initial Human–AI match")
     print(switch_by_match)
+
     switch_rates = switch_by_match.div(switch_by_match.sum(axis=1), axis=0)
+    print("\nSwitching rates")
     print(switch_rates)
 
-    confidence_by_initial_ai_match_and_switching = (
+    # ------------------------------------------------------------------
+    # 3. Counts dict for stacked bar plot (derived from labels)
+    # ------------------------------------------------------------------
+    counts = (
         trials
-        .groupby(["initial_agree_ai", "switched"])["delta_confidence"]
-        .describe()
-    )
-    print("\nConfidence by initial AI match and switching")
-    print(confidence_by_initial_ai_match_and_switching)
-
-    contingency = (
-        trials
-        .groupby(["initial_agree_ai", "switched"])
+        .groupby("decision_label")
         .size()
-        .unstack(fill_value=0)
+        .to_dict()
     )
-    counts = {
+
+    stacked_counts = {
         "Match": {
-            "Not Switch": int(contingency.loc[1, 0]),
-            "Switch": int(contingency.loc[1, 1]),
+            "Not Switch": counts.get("Match\nNot Switch", 0),
+            "Switch": counts.get("Match\nSwitch", 0),
         },
         "Mismatch": {
-            "Not Switch": int(contingency.loc[0, 0]),
-            "Switch": int(contingency.loc[0, 1]),
+            "Not Switch": counts.get("Mismatch\nNot Switch", 0),
+            "Switch": counts.get("Mismatch\nSwitch", 0),
         },
     }
 
     plot_binary_stacked_bar(
-        counts,
+        stacked_counts,
         outcome_order=["Not Switch", "Switch"],
         colors={
             "Not Switch": "#cccccc",
@@ -108,6 +126,32 @@ def inspect_human_ai_match(trials: pd.DataFrame, label: str):
         },
         ylabel="Switch",
         xlabel="Initial Human–AI Match",
+    )
+
+    # ------------------------------------------------------------------
+    # 4. Confidence descriptives (paper Table / Fig. 5d logic)
+    # ------------------------------------------------------------------
+    confidence_summary = (
+        trials
+        .groupby("decision_label")["delta_confidence"]
+        .describe()
+    )
+
+    print("\nConfidence by decision choice")
+    print(confidence_summary)
+
+    # ------------------------------------------------------------------
+    # 5. Box + jitter plot (Figure 5d)
+    # ------------------------------------------------------------------
+    plot_box_with_jitter(
+        df=trials,
+        x_col="decision_label",
+        y_col="delta_confidence",
+        order=[
+            "Match\nNot Switch",
+            "Mismatch\nSwitch",
+            "Mismatch\nNot Switch",
+        ],
     )
 
 

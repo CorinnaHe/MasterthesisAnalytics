@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 
 def plot_binary_stacked_bar(
@@ -80,3 +81,69 @@ def plot_binary_stacked_bar(
 
     plt.show()
     return ax
+
+
+
+def plot_box_with_jitter(
+    df: pd.DataFrame,
+    x_col: str,
+    y_col: str,
+    order: list | None = None,
+    show_stats: bool = True,
+    figsize=(8, 6),
+    jitter=0.08,
+):
+    if order is None:
+        order = list(df[x_col].dropna().unique())
+
+    fig, ax = plt.subplots(figsize=figsize)
+
+    data = [df.loc[df[x_col] == cat, y_col].dropna() for cat in order]
+
+    # --- boxplot ---
+    bp = ax.boxplot(
+        data,
+        positions=np.arange(len(order)),
+        widths=0.5,
+        patch_artist=True,
+        showfliers=False,
+        medianprops=dict(color="black"),
+        boxprops=dict(facecolor="white", edgecolor="black"),
+        whiskerprops=dict(color="black"),
+        capprops=dict(color="black"),
+    )
+
+    # --- jittered points ---
+    for i, values in enumerate(data):
+        x_jittered = np.random.normal(i, jitter, size=len(values))
+        ax.scatter(
+            x_jittered,
+            values,
+            alpha=0.7,
+            s=18,
+            zorder=2,
+        )
+
+        # --- mean & SD annotation ---
+        if show_stats:
+            mean = values.mean()
+            sd = values.std()
+            ax.text(
+                i,
+                mean,
+                f"M={mean:.2f}\nSD={sd:.2f}",
+                ha="center",
+                va="bottom" if mean >= 0 else "top",
+                fontsize=9,
+            )
+
+    ax.set_xticks(range(len(order)))
+    ax.set_xticklabels(order)
+    ax.set_xlabel("User Choices")
+    ax.set_ylabel(y_col.replace("_", " ").title())
+
+    ax.axhline(0, linestyle="--", linewidth=1, alpha=0.6)
+
+    plt.tight_layout()
+    plt.show()
+    return fig, ax
