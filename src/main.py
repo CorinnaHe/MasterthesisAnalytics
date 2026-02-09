@@ -1,5 +1,5 @@
 from data_loader import load_experiment_data, load_page_time_data
-from inspect_data import inspect_page_times, inspect_h2, inspect_accuracy
+from inspect_data import inspect_page_times, inspect_h2, inspect_accuracy, inspect_human_ai_match
 from variable_constructer import construct_variables_df
 from hypothesis_testing import test_h2
 
@@ -39,9 +39,10 @@ if __name__ == '__main__':
     print(main_trials_df)
 
     page_time_df = load_page_time_data(f"PageTimes-2026-02-05.csv")
-    inspect_page_times(page_time_df)
+    #inspect_page_times(page_time_df)
 
-    _accuracy(main_trials_df)
+    #_accuracy(main_trials_df)
+    inspect_human_ai_match(main_trials_df, "global")
 
-    inspect_h2(main_trials_df)
-    test_h2(main_trials_df)
+    #inspect_h2(main_trials_df)
+    #test_h2(main_trials_df)

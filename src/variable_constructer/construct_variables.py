@@ -57,6 +57,10 @@ def _construct_reliance_metrics(trials: pd.DataFrame) -> pd.DataFrame:
     ).astype(int)
 
     # switching behavior
+    trials["switched"] = (
+            trials["initial_decision"] != trials["final_decision"]
+    ).astype(int)
+
     trials["switched_to_ai"] = (
         ~trials["initial_agree_ai"] & trials["final_agree_ai"]
     ).astype(int)

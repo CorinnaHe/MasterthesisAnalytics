@@ -59,5 +59,27 @@ def inspect_accuracy(trials: pd.DataFrame, label: str):
     print(global_accuracy)
 
 
+def inspect_human_ai_match(trials: pd.DataFrame, label: str):
+    print(f"\n=== Human AI match inspection: {label} ===")
+    switch_by_match = (
+        trials
+        .groupby("initial_agree_ai")["switched"]
+        .value_counts()
+        .unstack(fill_value=0)
+    )
+    print("\nSwitching behaviour when users initial agreed with AI")
+    print(switch_by_match)
+    switch_rates = switch_by_match.div(switch_by_match.sum(axis=1), axis=0)
+    print(switch_rates)
+
+    confidence_by_initial_ai_match_and_switching = (
+        trials
+        .groupby(["initial_agree_ai", "switched"])["delta_confidence"]
+        .describe()
+    )
+    print("\nConfidence by initial AI match and switching")
+    print(confidence_by_initial_ai_match_and_switching)
+
+
 def inspect_h2(trials: pd.DataFrame):
     print(trials.groupby("condition")["appropriate_reliance"].mean())
