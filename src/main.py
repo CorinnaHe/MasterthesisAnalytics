@@ -1,7 +1,7 @@
 from data_loader import load_experiment_data, load_page_time_data
 from inspect_data import inspect_page_times, inspect_h2, inspect_accuracy, inspect_human_ai_match
 from variable_constructer import construct_variables_df
-from hypothesis_testing import test_h2
+from hypothesis_testing import test_h2, test_initial_ai_agree_and_switching_regulate_confidence
 
 import pandas as pd
 
@@ -43,6 +43,7 @@ if __name__ == '__main__':
 
     #_accuracy(main_trials_df)
     inspect_human_ai_match(main_trials_df, "global")
+    test_initial_ai_agree_and_switching_regulate_confidence(main_trials_df)
 
     #inspect_h2(main_trials_df)
     #test_h2(main_trials_df)
