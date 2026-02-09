@@ -1,5 +1,7 @@
 import pandas as pd
 
+from figures import plot_binary_stacked_bar
+
 
 def _accuracy_metrics(x: pd.DataFrame) -> pd.Series:
     user_only_accuracy = (x["initial_decision"] == x["y_true"]).mean()
@@ -79,6 +81,34 @@ def inspect_human_ai_match(trials: pd.DataFrame, label: str):
     )
     print("\nConfidence by initial AI match and switching")
     print(confidence_by_initial_ai_match_and_switching)
+
+    contingency = (
+        trials
+        .groupby(["initial_agree_ai", "switched"])
+        .size()
+        .unstack(fill_value=0)
+    )
+    counts = {
+        "Match": {
+            "Not Switch": int(contingency.loc[1, 0]),
+            "Switch": int(contingency.loc[1, 1]),
+        },
+        "Mismatch": {
+            "Not Switch": int(contingency.loc[0, 0]),
+            "Switch": int(contingency.loc[0, 1]),
+        },
+    }
+
+    plot_binary_stacked_bar(
+        counts,
+        outcome_order=["Not Switch", "Switch"],
+        colors={
+            "Not Switch": "#cccccc",
+            "Switch": "#4daf4a",
+        },
+        ylabel="Switch",
+        xlabel="Initial Human–AI Match",
+    )
 
 
 def inspect_h2(trials: pd.DataFrame):
