@@ -3,10 +3,10 @@ import pandas as pd
 def _construct_reliance_metrics(trials: pd.DataFrame) -> pd.DataFrame:
     trials = trials.copy()
 
-    mask_pp = trials["condition"].isin([1, 2])
-    mask_set = trials["condition"] == 3
+    mask_pp = trials["condition"].isin(["C1", "C2"])
+    mask_set = trials["condition"] == "C3"
 
-    trials["is_set_based"] = (trials["condition"] == 3).astype(int)
+    trials["is_set_based"] = (trials["condition"] == "C3").astype(int)
     # ai correctness
     trials["ai_correct"] = pd.NA
 

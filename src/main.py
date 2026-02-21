@@ -13,8 +13,8 @@ pd.set_option("display.max_colwidth", None)
 def _accuracy(main_trials_df: pd.DataFrame):
     inspect_accuracy(main_trials_df, "global")
 
-    point_trials = main_trials_df[main_trials_df["condition"].isin([1, 2])]
-    set_trials = main_trials_df[main_trials_df["condition"] == 3]
+    point_trials = main_trials_df[main_trials_df["condition"].isin(["C1", "C2"])]
+    set_trials = main_trials_df[main_trials_df["condition"] == "C3"]
     inspect_accuracy(point_trials, "point prediction")
     inspect_accuracy(set_trials, "set prediction")
 
@@ -25,7 +25,7 @@ def _accuracy(main_trials_df: pd.DataFrame):
 
 
 if __name__ == '__main__':
-    experiment_date = "synthetic_experiment_data"
+    experiment_date = "2026-02-13"
     (
         participants_df,
         example_trials_df,
@@ -39,11 +39,11 @@ if __name__ == '__main__':
     print(main_trials_df)
 
     page_time_df = load_page_time_data(f"PageTimes-2026-02-05.csv")
-    #inspect_page_times(page_time_df)
+    inspect_page_times(page_time_df)
 
-    #_accuracy(main_trials_df)
+    _accuracy(main_trials_df)
     inspect_human_ai_match(main_trials_df, "global")
     test_initial_ai_agree_and_switching_regulate_confidence(main_trials_df)
 
-    #inspect_h2(main_trials_df)
-    #test_h2(main_trials_df)
+    inspect_h2(main_trials_df)
+    test_h2(main_trials_df)
