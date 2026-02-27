@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 def _construct_reliance_metrics(trials: pd.DataFrame) -> pd.DataFrame:
@@ -8,21 +9,22 @@ def _construct_reliance_metrics(trials: pd.DataFrame) -> pd.DataFrame:
 
     trials["is_set_based"] = (trials["condition"] == "C3").astype(int)
     # ai correctness
-    trials["ai_correct"] = pd.NA
-
-    trials.loc[mask_pp, "ai_correct"] = (
-        trials.loc[mask_pp, "point_pred_cal"]
-        .eq(trials.loc[mask_pp, "y_true"])
+    trials["point_pred_correct"] = (
+        trials["point_pred_cal"]
+        .eq(trials["y_true"])
     ).astype(int)
 
-    trials.loc[mask_set, "ai_correct"] = (
-        (trials.loc[mask_set, "y_true"].eq("poor") &
-         trials.loc[mask_set, "cp_contains_poor"]) |
-        (trials.loc[mask_set, "y_true"].eq("standard") &
-         trials.loc[mask_set, "cp_contains_standard"]) |
-        (trials.loc[mask_set, "y_true"].eq("good") &
-         trials.loc[mask_set, "cp_contains_good"])
+    trials["set_based_correct"] = (
+            (trials["y_true"].eq("poor") & trials["cp_contains_poor"]) |
+            (trials["y_true"].eq("standard") & trials["cp_contains_standard"]) |
+            (trials["y_true"].eq("good") & trials["cp_contains_good"])
     ).astype(int)
+
+    trials["ai_correct"] = np.where(
+        trials["condition"].isin(["C1", "C2"]),
+        trials["point_pred_correct"],
+        trials["set_based_correct"]
+    )
 
     # human-ai agreement
     trials["initial_agree_ai"] = pd.NA
@@ -55,6 +57,20 @@ def _construct_reliance_metrics(trials: pd.DataFrame) -> pd.DataFrame:
         (trials.loc[mask_set, "final_decision"].eq("good") &
          trials.loc[mask_set, "cp_contains_good"])
     ).astype(int)
+
+    # set_size
+    cp_cols = [
+        "cp_contains_poor",
+        "cp_contains_standard",
+        "cp_contains_good"
+    ]
+
+    trials["set_size"] = np.nan
+    trials.loc[mask_set, "set_size"] = (
+        trials.loc[mask_set, cp_cols]
+        .astype(int)
+        .sum(axis=1)
+    )
 
     # switching behavior
     trials["switched"] = (
@@ -90,6 +106,7 @@ def _construct_confidence_metrics(trials: pd.DataFrame) -> pd.DataFrame:
     ).astype(int)
 
     trials["final_correct"] = trials["final_decision"].eq(trials["y_true"]).astype(int)
+    trials["initial_correct"] = trials["initial_decision"].eq(trials["y_true"]).astype(int)
 
     return trials
 

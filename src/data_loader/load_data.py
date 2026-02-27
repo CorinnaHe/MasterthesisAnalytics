@@ -35,7 +35,7 @@ def _get_participants_df(df: pd.DataFrame) -> pd.DataFrame:
     return df[participant_cols].copy()
 
 
-def _extract_trials(df, prefix):
+def _extract_trials(df, prefix, trials_df):
     pattern = re.compile(rf"^{prefix}\.(\d+)\.(.+)$")
     records = []
 
@@ -70,8 +70,16 @@ def _extract_trials(df, prefix):
     for col in ["initial_decision", "final_decision"]:
         df_trials[col] = df_trials[col].map(CONDITION_MAP)
 
-    if "case_id" in df_trials.columns:
-        return  df_trials[df_trials["case_id"].notna()]
+    if "case_id" in df_trials.columns and "case_id" in trials_df.columns:
+        df_trials = df_trials.merge(
+            trials_df[["case_id", "confidence_bin_point_pred"]],
+            on="case_id",
+            how="left"
+        ).rename(columns={
+            "confidence_bin_point_pred": "point_predict_conf_bin"
+        })
+    else:
+        df_trials["point_predict_conf_bin"] = pd.NA
 
     return df_trials
 
@@ -117,10 +125,12 @@ def load_experiment_data(file_name: str) -> pd.DataFrame:
     df_raw = pd.read_csv(RAW_DATA_DIR / file_name)
     df_raw = _filter_df(df_raw)
 
+    df_trials = pd.read_csv(RAW_DATA_DIR / "tasks_main_trials.csv")
+
     return (
         _get_participants_df(df_raw),
-        _extract_trials(df_raw, "example_trials"),
-        _extract_trials(df_raw, "main_trials"),
+        _extract_trials(df_raw, "example_trials", df_trials),
+        _extract_trials(df_raw, "main_trials", df_trials),
         _extract_single_block(df_raw, "control_measures", "age"),
     )
 

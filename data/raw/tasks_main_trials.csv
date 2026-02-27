@@ -1,0 +1,16 @@
+case_id,feat_Age,feat_Outstanding_Debt,feat_Monthly_Balance,feat_Occupation,feat_Interest_Rate,feat_Annual_Income,feat_Num_Credit_Card,y_true,point_pred_cal,point_pred_cal_correct,point_pred_confidence_cal_prediction,cp_standard_set_size,cp_standard_sorted_set,cp_standard_contains_good,cp_standard_contains_poor,cp_standard_contains_standard,cp_standard_contains_true,cp_standard_point_consistency,confidence_bin_point_pred
+5629,37.0,1165.77,295.23529087237966,Media_Manager,6.0,20496.79,3.0,standard,standard,True,0.86002916,1,['standard'],False,False,True,True,True,high_confidence
+119,33.0,197.92,351.438716627328,Journalist,18.0,32967.94,4.0,standard,standard,True,0.9322873,1,['standard'],False,False,True,True,True,high_confidence
+7907,34.0,1612.7,311.66390057608544,Lawyer,34.0,31506.9,10.0,standard,poor,False,0.78147775,2,"['poor', 'standard']",False,True,True,True,/,medium_confidence
+11346,29.0,2075.58,321.4953728088567,Developer,21.0,64404.16,8.0,standard,poor,False,0.83154356,2,"['poor', 'standard']",False,True,True,True,/,medium_confidence
+12108,22.0,2228.91,131.58201571453614,Lawyer,27.0,33610.36,5.0,poor,poor,True,0.83154356,1,['poor'],False,True,False,True,True,medium_confidence
+10791,25.0,2223.59,293.2670615778803,Media_Manager,34.0,15905.25,4.0,poor,poor,True,0.8320311,1,['poor'],False,True,False,True,True,medium_confidence
+15170,28.0,1137.33,243.15958011930752,Media_Manager,7.0,17926.7,3.0,standard,standard,True,0.717377,3,"['standard', 'good', 'poor']",True,True,True,True,True,medium_confidence
+7776,32.0,699.11,477.9509445872711,Entrepreneur,5.0,42400.7,5.0,poor,standard,False,0.4347168,3,"['standard', 'good', 'poor']",True,True,True,True,/,low_confidence
+8425,28.0,852.62,627.9643158719099,Developer,10.0,75524.26,5.0,standard,standard,True,0.5847118,3,"['standard', 'good', 'poor']",True,True,True,True,True,low_confidence
+8872,53.0,393.39,368.492521438387,Musician,12.0,41115.08,7.0,standard,standard,True,0.5242442,2,"['standard', 'good']",True,False,True,True,True,low_confidence
+5082,26.0,2842.68,240.564846110882,Lawyer,32.0,14387.88,6.0,poor,poor,True,0.58773553,2,"['poor', 'standard']",False,True,True,True,True,low_confidence
+15335,38.0,512.38,327.31686744999166,Teacher,10.0,34212.01,5.0,standard,standard,True,0.7902001,2,"['standard', 'good']",True,False,True,True,True,medium_confidence
+9110,41.0,888.82,391.1837937134448,Journalist,6.0,28131.62,4.0,poor,standard,False,0.8233657,2,"['standard', 'good']",True,False,True,False,False,medium_confidence
+5674,40.0,1590.4,288.6550698708156,Journalist,26.0,9917.285,5.0,poor,poor,True,0.7523917,2,"['poor', 'standard']",False,True,True,True,True,medium_confidence
+8985,29.0,97.33,257.43355052578863,Developer,5.0,25780.78,6.0,poor,standard,False,0.86166245,1,['standard'],False,False,True,False,False,high_confidence
