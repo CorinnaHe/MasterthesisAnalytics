@@ -10,7 +10,7 @@ from data_loader import load_experiment_data
 from variable_constructer import construct_variables_df
 
 if __name__ == '__main__':
-    experiment_date = "2026-02-25"
+    experiment_date = "2026-03-05"
     (
         participants_df,
         example_trials_df,
@@ -28,7 +28,7 @@ if __name__ == '__main__':
         correct_col="initial_correct",
         normalize_method="divide_by_max",
         discrete_bins=True,
-        plot=False,
+        plot=True,
     )
     print(initial_reliability_metrics["bin_statistics"])
     print("ECE:", initial_reliability_metrics["ECE"])
@@ -39,7 +39,7 @@ if __name__ == '__main__':
         correct_col="final_correct",
         normalize_method="divide_by_max",
         discrete_bins=True,
-        plot=False,
+        plot=True,
     )
     print(final_reliability_metrics["bin_statistics"])
     print("ECE:", final_reliability_metrics["ECE"])

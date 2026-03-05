@@ -1,6 +1,7 @@
 import pandas as pd
 import re
 from functools import cache
+import ast
 
 from config import RAW_DATA_DIR
 
@@ -70,9 +71,36 @@ def _extract_trials(df, prefix, trials_df):
     for col in ["initial_decision", "final_decision"]:
         df_trials[col] = df_trials[col].map(CONDITION_MAP)
 
+    def parse_cp_set(x):
+        if pd.isna(x):
+            return []
+
+        # If the entire list is wrapped in quotes -> remove them
+        if isinstance(x, str) and x.startswith('"') and x.endswith('"'):
+            x = x[1:-1]
+
+        # Safely convert string representation of list into actual list
+        try:
+            parsed = ast.literal_eval(x)
+            if isinstance(parsed, list):
+                return parsed
+            else:
+                return []
+        except (ValueError, SyntaxError):
+            return []
+
+    # Apply parsing
+    parsed_series = trials_df["cp_standard_sorted_set"].apply(parse_cp_set)
+
+    # Expand into three columns
+    trials_df[["cp_set_el1", "cp_set_el2", "cp_set_el3"]] = (
+        pd.DataFrame(parsed_series.tolist(), index=trials_df.index)
+        .reindex(columns=[0, 1, 2])  # ensures exactly 3 columns
+    )
+
     if "case_id" in df_trials.columns and "case_id" in trials_df.columns:
         df_trials = df_trials.merge(
-            trials_df[["case_id", "confidence_bin_point_pred"]],
+            trials_df[["case_id", "confidence_bin_point_pred", "cp_set_el1", "cp_set_el2", "cp_set_el3"]],
             on="case_id",
             how="left"
         ).rename(columns={
@@ -80,6 +108,9 @@ def _extract_trials(df, prefix, trials_df):
         })
     else:
         df_trials["point_predict_conf_bin"] = pd.NA
+        df_trials["cp_set_el1"] = pd.NA
+        df_trials["cp_set_el2"] = pd.NA
+        df_trials["cp_set_el3"] = pd.NA
 
     return df_trials
 
