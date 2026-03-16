@@ -31,7 +31,7 @@ def _accuracy(main_trials_df: pd.DataFrame):
 
 
 if __name__ == '__main__':
-    experiment_date = "2026-03-05"
+    experiment_date = "2026-03-11"
     (
         participants_df,
         example_trials_df,

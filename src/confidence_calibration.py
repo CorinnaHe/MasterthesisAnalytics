@@ -10,7 +10,7 @@ from data_loader import load_experiment_data
 from variable_constructer import construct_variables_df
 
 if __name__ == '__main__':
-    experiment_date = "2026-03-05"
+    experiment_date = "2026-03-12"
     (
         participants_df,
         example_trials_df,
@@ -68,8 +68,11 @@ if __name__ == '__main__':
     print(ece_combined.describe())
 
     print(f"\n=== Instance Level ===")
+    mismatch_df = main_trials_df[
+        main_trials_df["initial_agree_ai"] == 0
+        ].copy()
     cc_df = compute_cc_categories_initial(
-        df=main_trials_df,
+        df=mismatch_df,
         participant_col="participant_code",
         confidence_col="initial_confidence",
         correct_col="initial_correct"
@@ -107,10 +110,14 @@ if __name__ == '__main__':
     pivot_error.columns = ["participant_code", "error_mismatched", "error_matched"]
     print(pivot_error.head())
 
+    pivot_error_clean = pivot_error.dropna()
+
+    print(len(pivot_error), "participants before filtering")
+    print(len(pivot_error_clean), "participants with both conditions")
 
     stat, p = wilcoxon(
-        pivot_error["error_mismatched"],
-        pivot_error["error_matched"]
+        pivot_error_clean["error_mismatched"],
+        pivot_error_clean["error_matched"]
     )
 
     print("Wilcoxon statistic:", stat)
@@ -174,9 +181,6 @@ if __name__ == '__main__':
 
     print(f"\n=== Arda ===")
     print(f"\nInitial Correctness & Confidence")
-    mismatch_df = main_trials_df[
-        main_trials_df["initial_agree_ai"] == 0
-    ].copy()
     print(mismatch_df.groupby("initial_correct")["initial_confidence"].mean())
 
 

@@ -8,6 +8,19 @@ def _construct_reliance_metrics(trials: pd.DataFrame) -> pd.DataFrame:
     mask_set = trials["condition"] == "C3"
 
     trials["is_set_based"] = (trials["condition"] == "C3").astype(int)
+    # human correctness
+    trials["initial_correct"] = (
+            (trials["y_true"].eq("poor") & trials["initial_decision"]) |
+            (trials["y_true"].eq("standard") & trials["initial_decision"]) |
+            (trials["y_true"].eq("good") & trials["initial_decision"])
+    ).astype(int)
+
+    trials["final_correct"] = (
+            (trials["y_true"].eq("poor") & trials["final_decision"]) |
+            (trials["y_true"].eq("standard") & trials["final_decision"]) |
+            (trials["y_true"].eq("good") & trials["final_decision"])
+    ).astype(int)
+
     # ai correctness
     trials["point_pred_correct"] = (
         trials["point_pred_cal"]
@@ -65,9 +78,14 @@ def _construct_reliance_metrics(trials: pd.DataFrame) -> pd.DataFrame:
         "cp_contains_good"
     ]
 
-    trials["set_size"] = np.nan
-    trials.loc[mask_set, "set_size"] = (
-        trials.loc[mask_set, cp_cols]
+    #trials["set_size"] = np.nan
+    #trials.loc[mask_set, "set_size"] = (
+    #    trials.loc[mask_set, cp_cols]
+    #    .astype(int)
+    #    .sum(axis=1)
+    #)
+    trials["set_size"] = (
+        trials[cp_cols]
         .astype(int)
         .sum(axis=1)
     )

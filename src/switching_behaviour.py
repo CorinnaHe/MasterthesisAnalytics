@@ -7,7 +7,7 @@ from inspect_data import inspect_human_ai_match
 from variable_constructer import construct_variables_df
 
 if __name__ == '__main__':
-    experiment_date = "2026-03-05"
+    experiment_date = "2026-03-13"
     (
         participants_df,
         example_trials_df,
