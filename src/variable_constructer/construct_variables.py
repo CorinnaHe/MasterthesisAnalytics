@@ -90,6 +90,20 @@ def _construct_reliance_metrics(trials: pd.DataFrame) -> pd.DataFrame:
         .sum(axis=1)
     )
 
+
+    # shared_ai_confidence: common 1–3 scale (high = 3) across point- and set-based conditions.
+    #   For point-based (C1, included in mask_pp), use point_pred_confidence thresholds:
+    #   low=1 if <0.625, medium=2 if 0.625–0.84, high=3 if >0.84.
+    #   For set-based (mask_set), invert set_size so 1->3, 2->2, 3->1 to align with the same scale.
+    trials["shared_ai_confidence"] = pd.NA
+    conf = trials.loc[mask_pp, "point_pred_confidence"]
+    trials.loc[mask_pp, "shared_ai_confidence"] = (
+            (conf > 0.84).astype(int) * 3
+            + ((conf >= 0.625) & (conf <= 0.84)).astype(int) * 2
+            + (conf < 0.625).astype(int) * 1
+    )
+    trials.loc[mask_set, "shared_ai_confidence"] = trials.loc[mask_set, "set_size"].map({1: 3, 2: 2, 3: 1})
+
     # switching behavior
     trials["switched"] = (
             trials["initial_decision"] != trials["final_decision"]
