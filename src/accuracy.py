@@ -128,9 +128,9 @@ if __name__ == '__main__':
     )
     print(model.summary())
 
-    print("=== Logistic Regression with interaction correct ~ condition * point_pred_confidence ===")
+    print("=== Logistic Regression with interaction correct ~ condition * shared_ai_confidence ===")
     model = smf.logit(
-        "final_correct ~ C(condition) * point_pred_confidence",
+        "final_correct ~ C(condition) * shared_ai_confidence",
         data=main_trials_df
     ).fit(
         cov_type="cluster",
