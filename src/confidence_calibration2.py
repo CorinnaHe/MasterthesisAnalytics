@@ -108,7 +108,7 @@ if __name__ == '__main__':
         "ai_trust",
         "risk_aversion",
         "cognitive_load_mental",
-        "point_pred_confidence"
+        "shared_ai_confidence"
     ]
     scaler = StandardScaler()
     main_trials_df[scale_cols] = scaler.fit_transform(main_trials_df[scale_cols])
@@ -116,7 +116,7 @@ if __name__ == '__main__':
     # accuracy
     model_accuracy = smf.mixedlm(
         "final_correct ~ C(condition) + experience + ai_literacy + ai_trust + \
-         ai_correct + switched  + point_pred_confidence",
+         ai_correct + switched  + shared_ai_confidence",
         main_trials_df,
         groups=main_trials_df["participant_code"],
         vc_formula={"case": "0 + C(case_id)"}
@@ -128,7 +128,7 @@ if __name__ == '__main__':
     # confidence calibration
     model_calibration = smf.mixedlm(
         "calibration_score ~ C(condition) + experience + ai_literacy + ai_trust + \
-         ai_correct + switched  + point_pred_confidence",
+         ai_correct + switched  + shared_ai_confidence",
         main_trials_df,
         groups=main_trials_df["participant_code"],
         vc_formula={"case": "0 + C(case_id)"}
@@ -138,7 +138,7 @@ if __name__ == '__main__':
 
     # added
     model = smf.mixedlm(
-        "calibration_score ~ C(condition) * point_pred_confidence + experience + ai_literacy + ai_trust + \
+        "calibration_score ~ C(condition) * shared_ai_confidence + experience + ai_literacy + ai_trust + \
          ai_correct + switched",
         main_trials_df,
         groups=main_trials_df["participant_code"]
@@ -166,7 +166,7 @@ if __name__ == '__main__':
     model = smf.mixedlm(
         "switched ~ C(condition) \
          + experience + ai_literacy + ai_trust \
-         + ai_correct + point_pred_confidence",
+         + ai_correct + shared_ai_confidence",
         disagree_df,
         groups=disagree_df["participant_code"]
     )
@@ -175,7 +175,7 @@ if __name__ == '__main__':
 
     # AI Reliance
     model = smf.mixedlm(
-        "final_agree_ai ~ C(condition) + ai_correct + point_pred_confidence",
+        "final_agree_ai ~ C(condition) + ai_correct + shared_ai_confidence",
         disagree_df,
         groups=disagree_df["participant_code"]
     )
@@ -186,13 +186,13 @@ if __name__ == '__main__':
     correct_df = disagree_df[disagree_df["ai_correct"] == 1]
     incorrect_df = disagree_df[disagree_df["ai_correct"] == 0]
     model_correct = smf.mixedlm(
-        "final_agree_ai ~ C(condition) + point_pred_confidence",
+        "final_agree_ai ~ C(condition) + shared_ai_confidence",
         correct_df,
         groups=correct_df["participant_code"]
     )
     print(model_correct.fit().summary())
     model_incorrect = smf.mixedlm(
-        "final_agree_ai ~ C(condition) + point_pred_confidence",
+        "final_agree_ai ~ C(condition) + shared_ai_confidence",
         incorrect_df,
         groups=incorrect_df["participant_code"]
     )
