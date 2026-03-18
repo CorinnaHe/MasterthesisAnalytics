@@ -104,6 +104,11 @@ def _construct_reliance_metrics(trials: pd.DataFrame) -> pd.DataFrame:
     )
     trials.loc[mask_set, "shared_ai_confidence"] = trials.loc[mask_set, "set_size"].map({1: 3, 2: 2, 3: 1})
 
+    # human-ai confidence gap: shared ai confidence norm - initial human confidence norm
+    trials["human_norm"] = (trials["initial_confidence"] - 1) / 4
+    trials["shared_ai_norm"] = (trials["shared_ai_confidence"] - 1) / 2
+    trials["confidence_gap"] = trials["shared_ai_norm"] - trials["human_norm"]    # signed gap
+
     # switching behavior
     trials["switched"] = (
             trials["initial_decision"] != trials["final_decision"]
