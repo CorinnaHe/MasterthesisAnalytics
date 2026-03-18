@@ -183,13 +183,17 @@ if __name__ == '__main__':
 
     # 5.3 AI Concordance with AI
     # Does the treatment help humans distinguish good AI advice from bad AI advice?
-    main_trials_df["follow_correct_ai"] = (
-            (main_trials_df["final_agree_ai"] == 1) &
-            (main_trials_df["ai_correct"] == 1)
-    ).astype(int)
-    main_trials_df["follow_incorrect_ai"] = (
-            (main_trials_df["final_agree_ai"] == 1) &
-            (main_trials_df["ai_correct"] == 0)
-    ).astype(int)
-    correct_df = main_trials_df[main_trials_df["ai_correct"] == 1]
-    incorrect_df = main_trials_df[main_trials_df["ai_correct"] == 0]
+    correct_df = disagree_df[disagree_df["ai_correct"] == 1]
+    incorrect_df = disagree_df[disagree_df["ai_correct"] == 0]
+    model_correct = smf.mixedlm(
+        "final_agree_ai ~ C(condition) + point_pred_confidence",
+        correct_df,
+        groups=correct_df["participant_code"]
+    )
+    print(model_correct.fit().summary())
+    model_incorrect = smf.mixedlm(
+        "final_agree_ai ~ C(condition) + point_pred_confidence",
+        incorrect_df,
+        groups=incorrect_df["participant_code"]
+    )
+    print(model_incorrect.fit().summary())
