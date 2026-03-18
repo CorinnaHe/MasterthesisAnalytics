@@ -1,0 +1,195 @@
+from sklearn.preprocessing import StandardScaler
+
+from data_loader import load_experiment_data
+from variable_constructer import construct_variables_df
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+
+
+if __name__ == '__main__':
+    experiment_date = "2026-03-13"
+    (
+        participants_df,
+        example_trials_df,
+        main_trials_df,
+        control_measures_df,
+
+    ) = load_experiment_data(f"all_apps_wide-{experiment_date}.csv")
+    main_trials_df = construct_variables_df(main_trials_df)
+    main_trials_df = main_trials_df.merge(
+        control_measures_df,
+        left_on="participant_code",
+        right_on="participant_code"
+    )
+
+    # Yin et al. 4.1
+    accuracy_by_condition = main_trials_df.groupby("condition")["final_correct"].mean()
+    print(accuracy_by_condition)
+
+    main_trials_df["final_confidence_scaled"] = (main_trials_df["final_confidence"] - 1)/ 4
+    main_trials_df["calibration_score"] = main_trials_df["final_confidence_scaled"] - main_trials_df["final_correct"]
+    print(main_trials_df[["final_confidence_scaled", "calibration_score"]].describe())
+
+    calibration_by_condition = main_trials_df.groupby("condition")["calibration_score"].mean()
+
+    print(calibration_by_condition)
+
+    # Plot
+    bins = np.linspace(0, 1, 11)
+    main_trials_df["confidence_bin"] = pd.cut(
+        main_trials_df["final_confidence_scaled"],
+        bins=bins,
+        include_lowest=True
+    )
+    calibration_data = (
+        main_trials_df.groupby(["condition", "confidence_bin"])
+        .agg(
+            mean_confidence=("final_confidence_scaled", "mean"),
+            accuracy=("final_correct", "mean"),
+            count=("final_correct", "size")
+        )
+        .reset_index()
+    )
+    plt.figure(figsize=(8, 6))
+
+    for condition in calibration_data["condition"].unique():
+        subset = calibration_data[calibration_data["condition"] == condition]
+
+        plt.plot(
+            subset["mean_confidence"],
+            subset["accuracy"],
+            marker="o",
+            label=condition
+        )
+
+    # perfect calibration line
+    plt.plot([0, 1], [0, 1], linestyle="--")
+
+    plt.xlabel("Confidence")
+    plt.ylabel("Accuracy")
+    plt.title("Calibration Curve by Condition")
+
+    plt.legend()
+    #plt.show()
+
+    summary = (
+        main_trials_df.groupby("condition")
+        .agg(
+            mean_final_human_accuracy=("final_correct", "mean"),
+            mean_confidence=("final_confidence_scaled", "mean"),
+            mean_calibration=("calibration_score", "mean"),
+            mean_ai_accuracy=("ai_correct", "mean"),
+            observations=("final_correct", "size")
+        )
+    )
+    with pd.option_context(
+            "display.max_rows", None,
+            "display.max_columns", None
+    ):
+        print(summary)
+
+    # Yin et al. 4.2.1
+    main_trials_df["C2"] = (main_trials_df["condition"] == "C2").astype(int)
+    main_trials_df["C3"] = (main_trials_df["condition"] == "C3").astype(int)
+    main_trials_df["ai_literacy"] = main_trials_df[
+        ["ai_literacy_sk9", "ai_literacy_sk10", "ai_literacy_ail2", "ai_literacy_ue2"]
+    ].mean(axis=1)
+    main_trials_df["experience"] = main_trials_df["domain_experience"].isin(
+        ["Professional experience", "Some familiarity"]
+    )
+    scale_cols = [
+        "ai_literacy",
+        "ai_attitude",
+        "ai_trust",
+        "risk_aversion",
+        "cognitive_load_mental",
+        "point_pred_confidence"
+    ]
+    scaler = StandardScaler()
+    main_trials_df[scale_cols] = scaler.fit_transform(main_trials_df[scale_cols])
+
+    # accuracy
+    model_accuracy = smf.mixedlm(
+        "final_correct ~ C(condition) + experience + ai_literacy + ai_trust + \
+         ai_correct + switched  + point_pred_confidence",
+        main_trials_df,
+        groups=main_trials_df["participant_code"],
+        vc_formula={"case": "0 + C(case_id)"}
+    )
+    result_accuracy = model_accuracy.fit(method="powell")
+    print(result_accuracy.summary())
+
+    # Yin et al. 4.2.2
+    # confidence calibration
+    model_calibration = smf.mixedlm(
+        "calibration_score ~ C(condition) + experience + ai_literacy + ai_trust + \
+         ai_correct + switched  + point_pred_confidence",
+        main_trials_df,
+        groups=main_trials_df["participant_code"],
+        vc_formula={"case": "0 + C(case_id)"}
+    )
+    result_calibration = model_calibration.fit(method="powell")
+    print(result_calibration.summary())
+
+    # added
+    model = smf.mixedlm(
+        "calibration_score ~ C(condition) * point_pred_confidence + experience + ai_literacy + ai_trust + \
+         ai_correct + switched",
+        main_trials_df,
+        groups=main_trials_df["participant_code"]
+    )
+    result = model.fit(method="powell")
+    print(result.summary())
+
+    c3_df = main_trials_df[(main_trials_df["condition"] == "C3")]
+    model = smf.mixedlm(
+        "calibration_score ~ initial_agree_ai",
+        c3_df,
+        groups=c3_df["participant_code"]
+    )
+    result = model.fit()
+    print(result.summary())
+
+    # 5.1 Mechanisms
+    # switching behavior as mechanism
+    # added only initial mismatch dataframe to Yin et al. analysis
+    main_trials_df["final_agree_ai"] = main_trials_df["final_agree_ai"].astype(int)
+    main_trials_df["ai_correct"] = main_trials_df["ai_correct"].astype(int)
+    disagree_df = main_trials_df[
+        main_trials_df["initial_agree_ai"] == 0
+        ]
+    model = smf.mixedlm(
+        "switched ~ C(condition) \
+         + experience + ai_literacy + ai_trust \
+         + ai_correct + point_pred_confidence",
+        disagree_df,
+        groups=disagree_df["participant_code"]
+    )
+    result = model.fit()
+    print(result.summary())
+
+    # AI Reliance
+    model = smf.mixedlm(
+        "final_agree_ai ~ C(condition) + ai_correct + point_pred_confidence",
+        disagree_df,
+        groups=disagree_df["participant_code"]
+    )
+    print(model.fit().summary())
+
+    # 5.3 AI Concordance with AI
+    # Does the treatment help humans distinguish good AI advice from bad AI advice?
+    main_trials_df["follow_correct_ai"] = (
+            (main_trials_df["final_agree_ai"] == 1) &
+            (main_trials_df["ai_correct"] == 1)
+    ).astype(int)
+    main_trials_df["follow_incorrect_ai"] = (
+            (main_trials_df["final_agree_ai"] == 1) &
+            (main_trials_df["ai_correct"] == 0)
+    ).astype(int)
+    correct_df = main_trials_df[main_trials_df["ai_correct"] == 1]
+    incorrect_df = main_trials_df[main_trials_df["ai_correct"] == 0]

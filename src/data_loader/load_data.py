@@ -162,7 +162,10 @@ def load_experiment_data(file_name: str) -> pd.DataFrame:
         _get_participants_df(df_raw),
         _extract_trials(df_raw, "example_trials", df_trials),
         _extract_trials(df_raw, "main_trials", df_trials),
-        _extract_single_block(df_raw, "control_measures", "age"),
+        pd.merge(
+            _extract_single_block(df_raw, "cognitive_load", "mental_load_mental"),
+            _extract_single_block(df_raw, "control_measures", "age"),
+            on="participant_code")
     )
 
 

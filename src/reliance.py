@@ -350,7 +350,7 @@ def inspect_switching_behaviour(df):
 
 
 if __name__ == '__main__':
-    experiment_date = "2026-03-10"
+    experiment_date = "2026-03-13"
     (
         participants_df,
         example_trials_df,
@@ -362,7 +362,7 @@ if __name__ == '__main__':
     main_trials_df["final_agree_ai"] = main_trials_df["final_agree_ai"].astype(int)
 
     # Cao et al. 4.2
-    #inspect_human_ai_match(main_trials_df, "general")
+    inspect_human_ai_match(main_trials_df, "general")
 
     mismatch_df = main_trials_df[
         main_trials_df["initial_agree_ai"] == 0
@@ -372,7 +372,7 @@ if __name__ == '__main__':
 
     # Cao et al. 4.3.2
     overreliance_df = mismatch_df[mismatch_df["ai_correct"] == False]
-    #inspect_overreliance_based_on_condition(overreliance_df)
+    inspect_overreliance_based_on_condition(overreliance_df)
 
     # Cao et al. 4.3.3
     cases = {
@@ -388,12 +388,12 @@ if __name__ == '__main__':
         "mismatch_incorrect":
             main_trials_df[(main_trials_df["initial_agree_ai"] == False) & (main_trials_df["final_correct"] == 0)]
     }
-    #inspect_confidence_change_based_on_condition(cases)
+    inspect_confidence_change_based_on_condition(cases)
 
     # Cao et al. 4.3.4 -> not applicable here because metrics weren't collected
 
     # Cao et al. 5
     main_trials_control_measures_df = main_trials_df.merge(control_measures_df, on='participant_code', how='left') # join control measures
-    #inspect_switching_behaviour(main_trials_control_measures_df)
+    inspect_switching_behaviour(main_trials_control_measures_df)
 
 
