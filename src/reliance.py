@@ -157,7 +157,7 @@ def inspect_reliance_based_on_condition(mismatch_df: pd.DataFrame):
         # logistic regression
         model = smf.logit(
             #final_agree_ai here is similar to switch_to_ai bc mismatch df
-            "final_agree_ai ~ point_pred_confidence", #Cao et al. uses raw conf, we use calibrated confidence
+            "final_agree_ai ~ shared_ai_confidence", #Cao et al. uses raw conf, we use unified measure
             data=data
         ).fit(
             # added to Cao et al. clustered standard errors by participant
@@ -272,7 +272,7 @@ def inspect_switching_behaviour(df):
     predictors = [
         "initial_decision",
         "initial_confidence",
-        "point_pred_confidence",
+        "shared_ai_confidence",
         "C(condition)",
         "age",
         "C(gender)",
