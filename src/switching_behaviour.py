@@ -17,49 +17,22 @@ if __name__ == '__main__':
     main_trials_df = construct_variables_df(main_trials_df)
     print(main_trials_df.groupby('participant_code').describe())
     print(main_trials_df.groupby('condition')['participant_code'].nunique())
+    main_trials_df["confidence_gap"] = main_trials_df["confidence_gap"].astype(float)
 
 
     # variables
-    main_trials_df["initial_confidence_norm"] = (main_trials_df["initial_confidence"] - 1) / 4
-    c2_map = {
-        "low_confidence": 0.0,
-        "medium_confidence": 0.5,
-        "high_confidence": 1.0
-    }
-    main_trials_df["ai_confidence_norm_C1"] = main_trials_df["point_pred_confidence"]
-    main_trials_df["ai_confidence_norm_C2"] = main_trials_df["point_predict_conf_bin"].map(c2_map)
-    main_trials_df["ai_confidence_norm_C3"] = 1 - ((main_trials_df["set_size"] - 1) / 2)
-
-    main_trials_df["confidence_gap_C1"] = main_trials_df["ai_confidence_norm_C1"]-main_trials_df["initial_confidence_norm"]
-    main_trials_df["confidence_gap_C2"] = main_trials_df["ai_confidence_norm_C2"]-main_trials_df["initial_confidence_norm"]
-    main_trials_df["confidence_gap_C3"] = main_trials_df["ai_confidence_norm_C3"]-main_trials_df["initial_confidence_norm"]
-    conditions = [
-        main_trials_df["condition"] == "C1",
-        main_trials_df["condition"] == "C2",
-        main_trials_df["condition"] == "C3"
-    ]
-    choices = [
-        main_trials_df["confidence_gap_C1"],
-        main_trials_df["confidence_gap_C2"],
-        main_trials_df["confidence_gap_C3"]
-    ]
-    main_trials_df["confidence_gap"] = np.select(conditions, choices, default=np.nan)
-    main_trials_df["confidence_gap_norm"] = (
-        main_trials_df.groupby("condition")["confidence_gap"]
-        .transform(lambda x: (x - x.mean()) / x.std())
-    )
 
     print(f"\n=== General Switching Behaviour ===")
-    inspect_human_ai_match(main_trials_df, "global")
+    #inspect_human_ai_match(main_trials_df, "global")
     print(f"\n=== C1 Switching Behaviour ===")
     c1_df = main_trials_df[(main_trials_df["condition"] == "C1")]
-    inspect_human_ai_match(c1_df, "global")
+    #inspect_human_ai_match(c1_df, "global")
     print(f"\n=== C2 Switching Behaviour ===")
     c2_df = main_trials_df[(main_trials_df["condition"] == "C2")]
-    inspect_human_ai_match(c2_df, "global")
+    #inspect_human_ai_match(c2_df, "global")
     print(f"\n=== C3 Switching Behaviour ===")
     c3_df = main_trials_df[(main_trials_df["condition"] == "C3")]
-    inspect_human_ai_match(c3_df, "global")
+    #inspect_human_ai_match(c3_df, "global")
 
     print(f"\n=== Match & Switched ===")
     switched_by_match_df = main_trials_df[
@@ -96,7 +69,7 @@ if __name__ == '__main__':
             switched_by_match_df["initial_confidence"]
     )
     print(switched_by_match_df["confidence_change"].describe())
-    switched_by_match_df_C3 = switched_by_match_df[(main_trials_df["condition"] == "C3")]
+    switched_by_match_df_C3 = switched_by_match_df[(switched_by_match_df["condition"] == "C3")]
     initial_match_count = (
             switched_by_match_df["initial_decision"]
             == switched_by_match_df["cp_set_el1"]
@@ -136,7 +109,7 @@ if __name__ == '__main__':
         condition_df = mismatch_df[mismatch_df["condition"] == condition]
 
         model = smf.logit(
-            "switched ~ initial_confidence_norm",
+            "switched ~ initial_confidence",
             data=condition_df
         ).fit(
             cov_type="cluster",
@@ -146,16 +119,16 @@ if __name__ == '__main__':
         print(model.summary())
 
     print(f"\n=== Switched by AI Confidence ===")
-    print(mismatch_df.groupby('point_predict_conf_bin')['switched'].describe())
-    print(mismatch_df.groupby(['condition', 'point_predict_conf_bin'])['switched'].describe())
+    print(mismatch_df.groupby('shared_ai_confidence')['switched'].describe())
+    print(mismatch_df.groupby(['condition', 'shared_ai_confidence'])['switched'].describe())
     print(mismatch_df.groupby(['condition', 'set_size'])['switched'].describe())
 
     for condition in ["C1", "C2", "C3"]:
         condition_df = mismatch_df[mismatch_df["condition"] == condition]
-        print(condition_df.groupby('point_predict_conf_bin')['switched'].describe())
+        print(condition_df.groupby('shared_ai_confidence')['switched'].describe())
 
         model = smf.logit(
-            f"switched ~ ai_confidence_norm_{condition}",
+            f"switched ~ shared_ai_confidence",
             data=condition_df
         ).fit(
             cov_type="cluster",
@@ -166,13 +139,13 @@ if __name__ == '__main__':
 
     print(f"\n=== Switched by Confidence Gap ===")
     print(
-        main_trials_df.groupby("condition")[["confidence_gap_C1", "confidence_gap_C2", "confidence_gap_C3"]].describe())
+        main_trials_df.groupby("condition")["confidence_gap"].describe())
 
     for condition in ["C1", "C2", "C3"]:
         condition_df = mismatch_df[mismatch_df["condition"] == condition]
 
         model = smf.logit(
-            f"switched ~ confidence_gap_norm",
+            f"switched ~ confidence_gap",
             data=condition_df
         ).fit(
             cov_type="cluster",
@@ -186,7 +159,7 @@ if __name__ == '__main__':
         condition_df = mismatch_df[mismatch_df["condition"] == condition]
 
         model = smf.logit(
-            f"switched ~ confidence_gap_norm + initial_confidence_norm",
+            f"switched ~ confidence_gap + initial_confidence",
             data=condition_df
         ).fit(
             cov_type="cluster",
@@ -197,7 +170,7 @@ if __name__ == '__main__':
 
     print(f"\n=== Switched by Confidence Gap * Condition ===")
     model = smf.logit(
-        f"switched ~ confidence_gap_norm * C(condition)",
+        f"switched ~ confidence_gap * C(condition)",
         data=mismatch_df
     ).fit(
         cov_type="cluster",
@@ -205,9 +178,22 @@ if __name__ == '__main__':
     )
     print(model.summary())
 
+    print(pd.crosstab(
+        mismatch_df["condition"],
+        mismatch_df["switched"]
+    ))
+    print(pd.crosstab(
+        mismatch_df["condition"],
+        mismatch_df["confidence_gap"]
+    ))
+    print(pd.crosstab(
+        mismatch_df["confidence_gap"],
+        mismatch_df["switched"]
+    ))
+
     print(f"\n=== Switched by Confidence Gap * Condition + Initial Confidence ===")
     model = smf.logit(
-        "switched ~ confidence_gap_norm * C(condition) + initial_confidence_norm",
+        "switched ~ confidence_gap * C(condition) + initial_confidence",
         data=mismatch_df
     ).fit(
         cov_type="cluster",
@@ -220,7 +206,7 @@ if __name__ == '__main__':
         condition_df = mismatch_df[mismatch_df["condition"] == condition]
 
         model = smf.logit(
-            f"switched ~ ai_confidence_norm_{condition} + initial_confidence_norm",
+            f"switched ~ shared_ai_confidence + initial_confidence",
             data=condition_df
         ).fit(
             cov_type="cluster",
