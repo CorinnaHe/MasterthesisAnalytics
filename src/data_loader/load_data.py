@@ -4,7 +4,8 @@ from functools import cache
 import ast
 
 from config import RAW_DATA_DIR
-from variable_constructer import construct_variables_df
+from variable_constructer import construct_trial_level_variables, \
+    create_participant_stats, add_consolidated_control_measures
 
 PLAYER_COLUMNS_TO_DROP = {
     "id_in_group",
@@ -157,16 +158,23 @@ def load_experiment_data(file_name: str) -> pd.DataFrame:
     df_raw = pd.read_csv(RAW_DATA_DIR / file_name)
     df_raw = _filter_df(df_raw)
 
-    df_trials = pd.read_csv(RAW_DATA_DIR / "tasks_main_trials.csv")
+    case_df = pd.read_csv(RAW_DATA_DIR / "tasks_main_trials.csv")
 
-    return (
-        _get_participants_df(df_raw),
-        construct_variables_df(_extract_trials(df_raw, "example_trials", df_trials)),
-        construct_variables_df(_extract_trials(df_raw, "main_trials", df_trials)),
-        pd.merge(
+    example_trials_df = construct_trial_level_variables(_extract_trials(df_raw, "example_trials", case_df))
+    main_trials_df = construct_trial_level_variables(_extract_trials(df_raw, "main_trials", case_df))
+    control_measures_df = pd.merge(
             _extract_single_block(df_raw, "cognitive_load", "mental_load_mental"),
             _extract_single_block(df_raw, "control_measures", "age"),
             on="participant_code")
+    control_measures_df = add_consolidated_control_measures(control_measures_df)
+    participant_stats = create_participant_stats(main_trials_df)
+
+    return (
+        main_trials_df,
+        control_measures_df,
+        participant_stats,
+        _get_participants_df(df_raw),
+        example_trials_df,
     )
 
 

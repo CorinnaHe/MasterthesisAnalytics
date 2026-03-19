@@ -1,7 +1,6 @@
 import numpy as np
 
 from data_loader import load_experiment_data
-from variable_constructer import construct_variables_df
 
 import pandas as pd
 import seaborn as sns
@@ -385,10 +384,8 @@ def analyze_set_size_switching(
 if __name__ == '__main__':
     experiment_date = "2026-03-13"
     (
-        participants_df,
-        example_trials_df,
         main_trials_df,
-        control_measures_df,
+        *_
     ) = load_experiment_data(f"all_apps_wide-{experiment_date}.csv")
 
     case_df, difficulty_summary, df_analysis = analyze_case_difficulty(

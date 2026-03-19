@@ -1,5 +1,8 @@
 import numpy as np
 import pandas as pd
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+
 
 def _construct_reliance_metrics(trials: pd.DataFrame) -> pd.DataFrame:
     trials = trials.copy()
@@ -148,7 +151,65 @@ def _construct_confidence_metrics(trials: pd.DataFrame) -> pd.DataFrame:
     return trials
 
 
-def construct_variables_df(trials: pd.DataFrame) -> pd.DataFrame:
+def construct_trial_level_variables(trials: pd.DataFrame) -> pd.DataFrame:
     trials = _construct_reliance_metrics(trials)
     trials = _construct_confidence_metrics(trials)
     return trials
+
+
+def add_consolidated_control_measures(control_measures_df: pd.DataFrame) -> pd.DataFrame:
+    control_measures_df["ai_literacy"] = control_measures_df[
+        ["ai_literacy_sk9", "ai_literacy_sk10", "ai_literacy_ail2", "ai_literacy_ue2"]
+    ].mean(axis=1)
+    control_measures_df["experience"] = control_measures_df["domain_experience"].isin(
+        ["Professional experience", "Some familiarity"]
+    )
+    return control_measures_df
+
+def _create_behavioral_clusters(participant_stats: pd.DataFrame) -> pd.DataFrame:
+    features = participant_stats[
+        [
+            "switch_rate",
+            "switch_when_disagree",
+            "switch_when_agree",
+            "initial_human_conf_mean"
+        ]
+    ]
+
+    scaler = StandardScaler()
+    X = scaler.fit_transform(features)
+    kmeans = KMeans(n_clusters=3, random_state=42)
+    participant_stats["cluster"] = kmeans.fit_predict(X)
+    cluster_labels = {
+        0: "Selective AI reliance",
+        1: "AI Skeptics",
+        2: "Exploratory"
+    }
+    participant_stats["strategy"] = participant_stats["cluster"].map(cluster_labels)
+
+    return participant_stats
+
+
+def create_participant_stats(main_trials_df: pd.DataFrame) -> pd.DataFrame:
+    # aggregate measures from participants trials
+    participant_stats = (
+        main_trials_df.groupby("participant_code")
+        .agg(
+            n_trials=("switched", "count"),
+            switch_rate=("switched", "mean"),
+            switch_when_disagree=("switched", lambda x: x[main_trials_df.loc[x.index, "initial_agree_ai"] == 0].mean()),
+            switch_when_agree=("switched", lambda x: x[main_trials_df.loc[x.index, "initial_agree_ai"] == 1].mean()),
+            initial_human_conf_mean=("initial_confidence", "mean"),
+            final_human_conf_mean=("final_confidence", "mean"),
+            initial_accuracy=("initial_correct", "mean"),
+            final_accuracy=("final_correct", "mean"),
+            condition=("condition", "first"),
+        )
+    )
+    participant_stats = participant_stats.fillna(0)
+    participant_stats = participant_stats.reset_index()
+
+    # create clusters from stage 1 switching behavior and confidence
+    participant_stats = _create_behavioral_clusters(participant_stats)
+
+    return participant_stats

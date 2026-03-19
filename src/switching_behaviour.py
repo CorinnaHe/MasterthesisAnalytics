@@ -4,15 +4,13 @@ import statsmodels.formula.api as smf
 
 from data_loader import load_experiment_data
 from inspect_data import inspect_human_ai_match
-from variable_constructer import construct_variables_df
+from variable_constructer import construct_trial_level_variables
 
 if __name__ == '__main__':
     experiment_date = "2026-03-13"
     (
-        participants_df,
-        example_trials_df,
         main_trials_df,
-        control_measures_df,
+        *_
     ) = load_experiment_data(f"all_apps_wide-{experiment_date}.csv")
     print(main_trials_df.groupby('participant_code').describe())
     print(main_trials_df.groupby('condition')['participant_code'].nunique())

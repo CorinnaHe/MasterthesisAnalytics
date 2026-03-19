@@ -11,7 +11,7 @@ from statsmodels.stats.multicomp import pairwise_tukeyhsd
 
 from data_loader import load_experiment_data
 from figures import plot_box_with_jitter, plot_binary_stacked_bar
-from variable_constructer import construct_variables_df
+from variable_constructer import construct_trial_level_variables
 
 
 def run_mixed_anova(df):
@@ -352,10 +352,9 @@ def inspect_switching_behaviour(df):
 if __name__ == '__main__':
     experiment_date = "2026-03-13"
     (
-        participants_df,
-        example_trials_df,
         main_trials_df,
         control_measures_df,
+        *_
 
     ) = load_experiment_data(f"all_apps_wide-{experiment_date}.csv")
     main_trials_df["final_agree_ai"] = main_trials_df["final_agree_ai"].astype(int)

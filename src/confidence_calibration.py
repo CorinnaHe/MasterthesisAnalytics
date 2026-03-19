@@ -2,20 +2,16 @@ import numpy as np
 import pandas as pd
 from scipy.stats import wilcoxon
 import matplotlib.pyplot as plt
-import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
 from confidence_calibration import reliability_analysis, compute_ece_per_person, compute_cc_categories_initial
 from data_loader import load_experiment_data
-from variable_constructer import construct_variables_df
 
 if __name__ == '__main__':
     experiment_date = "2026-03-12"
     (
-        participants_df,
-        example_trials_df,
         main_trials_df,
-        control_measures_df,
+        *_
 
     ) = load_experiment_data(f"all_apps_wide-{experiment_date}.csv")
 

@@ -1,7 +1,7 @@
 from data_loader import load_experiment_data, load_page_time_data
 from inspect_data import inspect_page_times, inspect_h2, inspect_accuracy, inspect_human_ai_match, \
     plot_binary_col_by_ordinal_col
-from variable_constructer import construct_variables_df
+from variable_constructer import construct_trial_level_variables
 from hypothesis_testing import test_h2, test_initial_ai_agree_and_switching_regulate_confidence
 import statsmodels.formula.api as smf
 import pandas as pd
@@ -31,12 +31,10 @@ def _accuracy(main_trials_df: pd.DataFrame):
 
 
 if __name__ == '__main__':
-    experiment_date = "2026-03-11"
+    experiment_date = "2026-03-13"
     (
-        participants_df,
-        example_trials_df,
         main_trials_df,
-        control_measures_df,
+        *_
 
     ) = load_experiment_data(f"all_apps_wide-{experiment_date}.csv")
 

@@ -2,7 +2,6 @@ from scipy.stats import shapiro, kruskal
 import statsmodels.formula.api as smf
 
 from data_loader import load_experiment_data
-from variable_constructer import construct_variables_df
 import scikit_posthocs as sp
 
 
@@ -20,10 +19,9 @@ def cliffs_delta(x, y):
 if __name__ == '__main__':
     experiment_date = "2026-03-13"
     (
-        participants_df,
-        example_trials_df,
         main_trials_df,
         control_measures_df,
+        *_
 
     ) = load_experiment_data(f"all_apps_wide-{experiment_date}.csv")
     main_trials_df = main_trials_df.merge(

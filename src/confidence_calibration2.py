@@ -1,23 +1,18 @@
-from sklearn.preprocessing import StandardScaler
-
 from data_loader import load_experiment_data
-from variable_constructer import construct_variables_df
 
+from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
-import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
 
 if __name__ == '__main__':
     experiment_date = "2026-03-13"
     (
-        participants_df,
-        example_trials_df,
         main_trials_df,
         control_measures_df,
+        *_
 
     ) = load_experiment_data(f"all_apps_wide-{experiment_date}.csv")
     main_trials_df = main_trials_df.merge(
