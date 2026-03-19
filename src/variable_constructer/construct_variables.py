@@ -161,9 +161,14 @@ def add_consolidated_control_measures(control_measures_df: pd.DataFrame) -> pd.D
     control_measures_df["ai_literacy"] = control_measures_df[
         ["ai_literacy_sk9", "ai_literacy_sk10", "ai_literacy_ail2", "ai_literacy_ue2"]
     ].mean(axis=1)
+
     control_measures_df["experience"] = control_measures_df["domain_experience"].isin(
         ["Professional experience", "Some familiarity"]
     )
+
+    trust_items = ["ai_attitude", "ai_trust"]
+    control_measures_df["trust_score"] = control_measures_df[trust_items].mean(axis=1)
+
     return control_measures_df
 
 def _create_behavioral_clusters(participant_stats: pd.DataFrame) -> pd.DataFrame:

@@ -2,22 +2,17 @@ from scipy import stats
 import scikit_posthocs as sp
 
 from data_loader import load_experiment_data
-from variable_constructer import construct_trial_level_variables
 
 if __name__ == '__main__':
     experiment_date = "2026-03-13"
     (
-        main_trials_df,
+        _,
         control_measures_df,
+        participant_stats,
         *_
 
     ) = load_experiment_data(f"all_apps_wide-{experiment_date}.csv")
-
-    df_cond_unique = main_trials_df[['participant_code', 'condition']].drop_duplicates()
-    control_measures_df = control_measures_df.merge(df_cond_unique, on='participant_code', how='left')
-
-    trust_items = ["ai_attitude", "ai_trust"]
-    control_measures_df["trust_score"] = control_measures_df[trust_items].mean(axis=1)
+    control_measures_df = control_measures_df.merge(participant_stats[['participant_code', 'condition']], on='participant_code', how='left')
 
     # Schauer et Schnurr
     groups = [
