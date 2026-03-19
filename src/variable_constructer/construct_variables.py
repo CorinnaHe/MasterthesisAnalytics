@@ -223,3 +223,39 @@ def create_participant_stats(main_trials_df: pd.DataFrame) -> pd.DataFrame:
     participant_stats = _create_behavioral_clusters(participant_stats)
 
     return participant_stats
+
+
+def create_case_stats(main_trials_df: pd.DataFrame) -> pd.DataFrame:
+    # accuracy measures
+    case_df = (
+        main_trials_df
+        .groupby("case_id")
+        .agg(
+            user_only_accuracy=("initial_correct", "mean"),
+            team_accuracy=("final_correct", "mean"),
+            ai_accuracy=("ai_correct", "mean"),
+            n_trials=("initial_correct", "count")
+        )
+        .reset_index()
+    )
+    case_df["team_delta"] = (
+            case_df["team_accuracy"] - case_df["user_only_accuracy"]
+    )
+
+    # add difficulty bins
+    bins = [-np.inf, 0.25, 0.5, 0.75, np.inf]
+    labels = ["very_hard", "hard", "medium", "easy"]
+    # human difficulty
+    case_df["human_difficulty"] = pd.cut(
+        case_df["user_only_accuracy"],
+        bins=bins,
+        labels=labels
+    )
+    # ai difficulty
+    case_df["ai_difficulty"] = pd.cut(
+        case_df["ai_accuracy"],
+        bins=bins,
+        labels=labels
+    )
+
+    return case_df

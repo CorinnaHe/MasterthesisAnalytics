@@ -5,7 +5,7 @@ import ast
 
 from config import RAW_DATA_DIR
 from variable_constructer import construct_trial_level_variables, \
-    create_participant_stats, add_consolidated_control_measures
+    create_participant_stats, add_consolidated_control_measures, create_case_stats
 
 PLAYER_COLUMNS_TO_DROP = {
     "id_in_group",
@@ -168,11 +168,13 @@ def load_experiment_data(file_name: str) -> pd.DataFrame:
             on="participant_code")
     control_measures_df = add_consolidated_control_measures(control_measures_df)
     participant_stats = create_participant_stats(main_trials_df)
+    case_stats = create_case_stats(main_trials_df)
 
     return (
         main_trials_df,
         control_measures_df,
         participant_stats,
+        case_stats,
         _get_participants_df(df_raw),
         example_trials_df,
     )
