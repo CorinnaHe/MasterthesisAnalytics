@@ -40,8 +40,6 @@ if __name__ == '__main__':
 
     ) = load_experiment_data(f"all_apps_wide-{experiment_date}.csv")
 
-    main_trials_df = construct_variables_df(main_trials_df)
-
     print(main_trials_df)
 
     _accuracy(main_trials_df)

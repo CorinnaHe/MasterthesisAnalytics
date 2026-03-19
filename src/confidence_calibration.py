@@ -19,8 +19,6 @@ if __name__ == '__main__':
 
     ) = load_experiment_data(f"all_apps_wide-{experiment_date}.csv")
 
-    main_trials_df = construct_variables_df(main_trials_df)
-
     print(f"\n=== Trial Level ===")
     initial_reliability_metrics = reliability_analysis(
         df=main_trials_df,

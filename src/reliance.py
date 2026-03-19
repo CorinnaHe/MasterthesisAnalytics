@@ -358,7 +358,6 @@ if __name__ == '__main__':
         control_measures_df,
 
     ) = load_experiment_data(f"all_apps_wide-{experiment_date}.csv")
-    main_trials_df = construct_variables_df(main_trials_df)
     main_trials_df["final_agree_ai"] = main_trials_df["final_agree_ai"].astype(int)
 
     # Cao et al. 4.2

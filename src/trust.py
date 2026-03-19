@@ -13,7 +13,6 @@ if __name__ == '__main__':
         control_measures_df,
 
     ) = load_experiment_data(f"all_apps_wide-{experiment_date}.csv")
-    main_trials_df = construct_variables_df(main_trials_df)
 
     df_cond_unique = main_trials_df[['participant_code', 'condition']].drop_duplicates()
     control_measures_df = control_measures_df.merge(df_cond_unique, on='participant_code', how='left')

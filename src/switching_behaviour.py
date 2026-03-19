@@ -14,7 +14,6 @@ if __name__ == '__main__':
         main_trials_df,
         control_measures_df,
     ) = load_experiment_data(f"all_apps_wide-{experiment_date}.csv")
-    main_trials_df = construct_variables_df(main_trials_df)
     print(main_trials_df.groupby('participant_code').describe())
     print(main_trials_df.groupby('condition')['participant_code'].nunique())
     main_trials_df["confidence_gap"] = main_trials_df["confidence_gap"].astype(float)

@@ -390,7 +390,6 @@ if __name__ == '__main__':
         main_trials_df,
         control_measures_df,
     ) = load_experiment_data(f"all_apps_wide-{experiment_date}.csv")
-    main_trials_df = construct_variables_df(main_trials_df)
 
     case_df, difficulty_summary, df_analysis = analyze_case_difficulty(
         df=main_trials_df,

@@ -21,7 +21,6 @@ if __name__ == '__main__':
         main_trials_df,
         control_measures_df,
     ) = load_experiment_data(f"all_apps_wide-{experiment_date}.csv")
-    main_trials_df = construct_variables_df(main_trials_df)
 
     # variables
     main_trials_df["initial_confidence_norm"] = (main_trials_df["initial_confidence"] - 1) / 4

@@ -4,6 +4,7 @@ from functools import cache
 import ast
 
 from config import RAW_DATA_DIR
+from variable_constructer import construct_variables_df
 
 PLAYER_COLUMNS_TO_DROP = {
     "id_in_group",
@@ -160,8 +161,8 @@ def load_experiment_data(file_name: str) -> pd.DataFrame:
 
     return (
         _get_participants_df(df_raw),
-        _extract_trials(df_raw, "example_trials", df_trials),
-        _extract_trials(df_raw, "main_trials", df_trials),
+        construct_variables_df(_extract_trials(df_raw, "example_trials", df_trials)),
+        construct_variables_df(_extract_trials(df_raw, "main_trials", df_trials)),
         pd.merge(
             _extract_single_block(df_raw, "cognitive_load", "mental_load_mental"),
             _extract_single_block(df_raw, "control_measures", "age"),
