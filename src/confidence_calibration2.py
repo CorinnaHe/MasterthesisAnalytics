@@ -25,25 +25,23 @@ if __name__ == '__main__':
     accuracy_by_condition = main_trials_df.groupby("condition")["final_correct"].mean()
     print(accuracy_by_condition)
 
-    main_trials_df["final_confidence_scaled"] = (main_trials_df["final_confidence"] - 1)/ 4
-    main_trials_df["calibration_score"] = main_trials_df["final_confidence_scaled"] - main_trials_df["final_correct"]
-    print(main_trials_df[["final_confidence_scaled", "calibration_score"]].describe())
+    print(main_trials_df[["final_confidence_norm", "final_calibration_score"]].describe())
 
-    calibration_by_condition = main_trials_df.groupby("condition")["calibration_score"].mean()
+    calibration_by_condition = main_trials_df.groupby("condition")["final_calibration_score"].mean()
 
     print(calibration_by_condition)
 
     # Plot
     bins = np.linspace(0, 1, 11)
     main_trials_df["confidence_bin"] = pd.cut(
-        main_trials_df["final_confidence_scaled"],
+        main_trials_df["final_confidence_norm"],
         bins=bins,
         include_lowest=True
     )
     calibration_data = (
         main_trials_df.groupby(["condition", "confidence_bin"])
         .agg(
-            mean_confidence=("final_confidence_scaled", "mean"),
+            mean_confidence=("final_confidence_norm", "mean"),
             accuracy=("final_correct", "mean"),
             count=("final_correct", "size")
         )
@@ -75,8 +73,8 @@ if __name__ == '__main__':
         main_trials_df.groupby("condition")
         .agg(
             mean_final_human_accuracy=("final_correct", "mean"),
-            mean_confidence=("final_confidence_scaled", "mean"),
-            mean_calibration=("calibration_score", "mean"),
+            mean_confidence=("final_confidence_norm", "mean"),
+            mean_calibration=("final_calibration_score", "mean"),
             mean_ai_accuracy=("ai_correct", "mean"),
             observations=("final_correct", "size")
         )
@@ -115,7 +113,7 @@ if __name__ == '__main__':
     # Yin et al. 4.2.2
     # confidence calibration
     model_calibration = smf.mixedlm(
-        "calibration_score ~ C(condition) + experience + ai_literacy + ai_trust + \
+        "final_calibration_score ~ C(condition) + experience + ai_literacy + ai_trust + \
          ai_correct + switched  + shared_ai_confidence",
         main_trials_df,
         groups=main_trials_df["participant_code"],
@@ -126,7 +124,7 @@ if __name__ == '__main__':
 
     # added
     model = smf.mixedlm(
-        "calibration_score ~ C(condition) * shared_ai_confidence + experience + ai_literacy + ai_trust + \
+        "final_calibration_score ~ C(condition) * shared_ai_confidence + experience + ai_literacy + ai_trust + \
          ai_correct + switched",
         main_trials_df,
         groups=main_trials_df["participant_code"]
@@ -136,7 +134,7 @@ if __name__ == '__main__':
 
     c3_df = main_trials_df[(main_trials_df["condition"] == "C3")]
     model = smf.mixedlm(
-        "calibration_score ~ initial_agree_ai",
+        "final_calibration_score ~ initial_agree_ai",
         c3_df,
         groups=c3_df["participant_code"]
     )

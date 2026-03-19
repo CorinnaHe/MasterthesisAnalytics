@@ -109,8 +109,13 @@ def _construct_reliance_metrics(trials: pd.DataFrame) -> pd.DataFrame:
 
     # human-ai confidence gap: shared ai confidence norm - initial human confidence norm
     trials["initial_confidence_norm"] = (trials["initial_confidence"] - 1) / 4
+    trials["final_confidence_norm"] = (trials["final_confidence"] - 1) / 4
     trials["shared_ai_norm"] = (trials["shared_ai_confidence"] - 1) / 2
     trials["confidence_gap"] = trials["shared_ai_norm"] - trials["initial_confidence_norm"]    # signed gap
+
+    # confidence calibration score
+    trials["initial_calibration_score"] = trials["initial_confidence_norm"] - trials["initial_correct"]
+    trials["final_calibration_score"] = trials["final_confidence_norm"] - trials["final_correct"]
 
     # switching behavior
     trials["switched"] = (
