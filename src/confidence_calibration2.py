@@ -90,12 +90,6 @@ if __name__ == '__main__':
     # Yin et al. 4.2.1
     main_trials_df["C2"] = (main_trials_df["condition"] == "C2").astype(int)
     main_trials_df["C3"] = (main_trials_df["condition"] == "C3").astype(int)
-    main_trials_df["ai_literacy"] = main_trials_df[
-        ["ai_literacy_sk9", "ai_literacy_sk10", "ai_literacy_ail2", "ai_literacy_ue2"]
-    ].mean(axis=1)
-    main_trials_df["experience"] = main_trials_df["domain_experience"].isin(
-        ["Professional experience", "Some familiarity"]
-    )
     scale_cols = [
         "ai_literacy",
         "ai_attitude",
