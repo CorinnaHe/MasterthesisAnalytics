@@ -21,6 +21,7 @@ if __name__ == '__main__':
     (
         main_trials_df,
         control_measures_df,
+        participant_stats,
         *_
 
     ) = load_experiment_data(f"all_apps_wide-{experiment_date}.csv")
@@ -30,32 +31,26 @@ if __name__ == '__main__':
         right_on="participant_code"
     )
 
-
     # Schauer paper
-    acc_df = (
-        main_trials_df.groupby(["participant_code", "condition"])["final_correct"]
-        .mean()
-        .reset_index(name="accuracy")
-    )
-    print(acc_df.head())
+    print(participant_stats.head())
 
-    summary = acc_df.groupby("condition")["accuracy"].agg(["mean", "std", "count"])
+    summary = participant_stats.groupby("condition")["final_accuracy"].agg(["mean", "std", "count"])
     print(summary)
 
     # Shapiro-Wilk (Normalverteilungs-Test)
-    stat, p = shapiro(acc_df["accuracy"])
+    stat, p = shapiro(participant_stats["final_accuracy"])
     print("Shapiro-Wilk p-value:", p) # p < 0.05 nicht normalverteilt, wie auch bei Schauer
 
     # Kruskal-Wallis Test
     groups = [
-        acc_df[acc_df.condition == "C1"]["accuracy"],
-        acc_df[acc_df.condition == "C2"]["accuracy"],
-        acc_df[acc_df.condition == "C3"]["accuracy"]
+        participant_stats[participant_stats.condition == "C1"]["final_accuracy"],
+        participant_stats[participant_stats.condition == "C2"]["final_accuracy"],
+        participant_stats[participant_stats.condition == "C3"]["final_accuracy"]
     ]
 
     H, p = kruskal(*groups)
 
-    n = len(acc_df)
+    n = len(participant_stats)
     k = 3
 
     eta2 = (H - k + 1) / (n - k)
@@ -67,8 +62,8 @@ if __name__ == '__main__':
 
     # Post-hoc Dunn Test
     dunn = sp.posthoc_dunn(
-        acc_df,
-        val_col="accuracy",
+        participant_stats,
+        val_col="final_accuracy",
         group_col="condition",
         p_adjust="fdr_bh"  # Benjamini-Hochberg
     )
@@ -76,9 +71,9 @@ if __name__ == '__main__':
     # C1 vs. C2 nur marginal, C1 vs. C3 signifikant. C2 vs. C3 nicht signifikant
 
     # Pairwise tests Cliffs Delta
-    c1 = acc_df[acc_df.condition == "C1"]["accuracy"]
-    c2 = acc_df[acc_df.condition == "C2"]["accuracy"]
-    c3 = acc_df[acc_df.condition == "C3"]["accuracy"]
+    c1 = participant_stats[participant_stats.condition == "C1"]["final_accuracy"]
+    c2 = participant_stats[participant_stats.condition == "C2"]["final_accuracy"]
+    c3 = participant_stats[participant_stats.condition == "C3"]["final_accuracy"]
 
     print("C1 vs C2:", cliffs_delta(c1, c2)) # small-medium
     print("C1 vs C3:", cliffs_delta(c1, c3)) # medium
