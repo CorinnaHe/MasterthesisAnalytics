@@ -1,3 +1,5 @@
+from statistics import mean
+
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
@@ -142,6 +144,10 @@ def _construct_reliance_metrics(trials: pd.DataFrame) -> pd.DataFrame:
         trials["final_agree_ai"] == trials["ai_correct"]
     ).astype(int)
 
+    # page duration
+    trials["mean_page_duration"] = (trials["page_duration_stage1"] + trials["page_duration_stage2"]) / 2
+    trials["delta_page_duration"] = (trials["page_duration_stage1"] - trials["page_duration_stage2"])
+
     return trials
 
 
@@ -213,9 +219,13 @@ def create_participant_stats(main_trials_df: pd.DataFrame) -> pd.DataFrame:
             final_human_conf_mean=("final_confidence", "mean"),
             initial_accuracy=("initial_correct", "mean"),
             final_accuracy=("final_correct", "mean"),
+            mean_page_duration_stage1=("page_duration_stage1", "mean"),
+            mean_page_duration_stage2=("page_duration_stage2", "mean"),
             condition=("condition", "first"),
         )
     )
+    participant_stats["mean_page_duration"] = (participant_stats["mean_page_duration_stage1"] + participant_stats["mean_page_duration_stage2"])/2
+    participant_stats["delta_page_duration"] = (participant_stats["mean_page_duration_stage1"] - participant_stats["mean_page_duration_stage2"])
     participant_stats = participant_stats.fillna(0)
     participant_stats = participant_stats.reset_index()
 
@@ -234,6 +244,8 @@ def create_case_stats(main_trials_df: pd.DataFrame) -> pd.DataFrame:
             user_only_accuracy=("initial_correct", "mean"),
             team_accuracy=("final_correct", "mean"),
             ai_accuracy=("ai_correct", "mean"),
+            mean_page_duration_stage1=("page_duration_stage1", "mean"),
+            mean_page_duration_stage2=("page_duration_stage2", "mean"),
             n_trials=("initial_correct", "count")
         )
         .reset_index()
@@ -241,6 +253,10 @@ def create_case_stats(main_trials_df: pd.DataFrame) -> pd.DataFrame:
     case_df["team_delta"] = (
             case_df["team_accuracy"] - case_df["user_only_accuracy"]
     )
+    case_df["mean_page_duration"] = (case_df["mean_page_duration_stage1"] + case_df[
+        "mean_page_duration_stage2"]) / 2
+    case_df["delta_page_duration"] = (
+                case_df["mean_page_duration_stage1"] - case_df["mean_page_duration_stage2"])
 
     # add difficulty bins
     bins = [-np.inf, 0.25, 0.5, 0.75, np.inf]

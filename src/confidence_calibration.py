@@ -8,7 +8,7 @@ from confidence_calibration import reliability_analysis, compute_ece_per_person,
 from data_loader import load_experiment_data
 
 if __name__ == '__main__':
-    experiment_date = "2026-03-12"
+    experiment_date = "2026-03-20"
     (
         main_trials_df,
         *_
@@ -18,7 +18,7 @@ if __name__ == '__main__':
     print(f"\n=== Trial Level ===")
     initial_reliability_metrics = reliability_analysis(
         df=main_trials_df,
-        confidence_col="initial_confidence",
+        confidence_col="initial_confidence_norm",
         correct_col="initial_correct",
         normalize_method="divide_by_max",
         discrete_bins=True,
@@ -29,7 +29,7 @@ if __name__ == '__main__':
 
     final_reliability_metrics = reliability_analysis(
         df=main_trials_df,
-        confidence_col="final_confidence",
+        confidence_col="final_confidence_norm",
         correct_col="final_correct",
         normalize_method="divide_by_max",
         discrete_bins=True,

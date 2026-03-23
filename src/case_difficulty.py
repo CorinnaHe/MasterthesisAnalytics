@@ -199,7 +199,7 @@ def _print_statistics(case_stats, difficulty_column):
 
 
 if __name__ == '__main__':
-    experiment_date = "2026-03-13"
+    experiment_date = "2026-03-20"
     (
         main_trials_df,
         _,

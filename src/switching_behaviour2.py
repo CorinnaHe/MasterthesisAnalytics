@@ -11,7 +11,7 @@ import scikit_posthocs as sp
 import statsmodels.formula.api as smf
 
 if __name__ == '__main__':
-    experiment_date = "2026-03-13"
+    experiment_date = "2026-03-20"
     (
         _,
         control_measures_df,

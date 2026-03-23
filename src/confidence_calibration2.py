@@ -8,7 +8,7 @@ import statsmodels.formula.api as smf
 
 
 if __name__ == '__main__':
-    experiment_date = "2026-03-13"
+    experiment_date = "2026-03-20"
     (
         main_trials_df,
         control_measures_df,

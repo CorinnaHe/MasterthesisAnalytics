@@ -4,7 +4,7 @@ import scikit_posthocs as sp
 from data_loader import load_experiment_data
 
 if __name__ == '__main__':
-    experiment_date = "2026-03-13"
+    experiment_date = "2026-03-20"
     (
         _,
         control_measures_df,
