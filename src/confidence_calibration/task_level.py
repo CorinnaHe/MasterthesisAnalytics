@@ -4,40 +4,6 @@ import matplotlib.pyplot as plt
 
 
 # --------------------------------------------------
-# 1. Confidence Normalization
-# --------------------------------------------------
-
-def _normalize_confidence(df, confidence_col, method="scale_0_1"):
-    """
-    Normalize confidence values.
-
-    method:
-        - "scale_0_1"  -> min-max scaling to [0,1]
-        - "divide_by_max" -> divide by max value (useful for 1–5 Likert)
-        - None -> no normalization
-    """
-    data = df.copy()
-
-    if method is None:
-        data["conf_norm"] = data[confidence_col]
-        return data, "conf_norm"
-
-    if method == "scale_0_1":
-        min_c = data[confidence_col].min()
-        max_c = data[confidence_col].max()
-        data["conf_norm"] = (data[confidence_col] - min_c) / (max_c - min_c)
-
-    elif method == "divide_by_max":
-        max_c = data[confidence_col].max()
-        data["conf_norm"] = data[confidence_col] / max_c
-
-    else:
-        raise ValueError("Unknown normalization method")
-
-    return data, "conf_norm"
-
-
-# --------------------------------------------------
 # 2. Binning
 # --------------------------------------------------
 
@@ -146,11 +112,7 @@ def reliability_analysis(
     data = df[[confidence_col, correct_col]].dropna()
 
     # Normalize confidence
-    data, conf_used = _normalize_confidence(
-        data,
-        confidence_col,
-        method=normalize_method
-    )
+    conf_used = confidence_col
 
     # Create bins
     data = _create_bins(
