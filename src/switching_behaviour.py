@@ -4,10 +4,9 @@ import statsmodels.formula.api as smf
 
 from data_loader import load_experiment_data
 from inspect_data import inspect_human_ai_match
-from variable_constructer import construct_trial_level_variables
 
 if __name__ == '__main__':
-    experiment_date = "2026-03-13"
+    experiment_date = "2026-03-20"
     (
         main_trials_df,
         *_
@@ -20,16 +19,22 @@ if __name__ == '__main__':
     # variables
 
     print(f"\n=== General Switching Behaviour ===")
-    #inspect_human_ai_match(main_trials_df, "global")
+    inspect_human_ai_match(main_trials_df, "global")
     print(f"\n=== C1 Switching Behaviour ===")
     c1_df = main_trials_df[(main_trials_df["condition"] == "C1")]
-    #inspect_human_ai_match(c1_df, "global")
+    inspect_human_ai_match(c1_df, "global")
     print(f"\n=== C2 Switching Behaviour ===")
     c2_df = main_trials_df[(main_trials_df["condition"] == "C2")]
-    #inspect_human_ai_match(c2_df, "global")
+    inspect_human_ai_match(c2_df, "global")
     print(f"\n=== C3 Switching Behaviour ===")
     c3_df = main_trials_df[(main_trials_df["condition"] == "C3")]
-    #inspect_human_ai_match(c3_df, "global")
+    inspect_human_ai_match(c3_df, "global")
+
+    print(f"\n=== Inspect Page Times ===")
+    print(main_trials_df.groupby("condition")["mean_page_duration"].agg(["mean", "std", "count"]))
+    print(main_trials_df.groupby("switched")["mean_page_duration"].agg(["mean", "std", "count"]))
+    print(main_trials_df.groupby("initial_agree_ai")["mean_page_duration"].agg(["mean", "std", "count"]))
+    print(main_trials_df.groupby(["initial_agree_ai", "switched"])["mean_page_duration"].agg(["mean", "std", "count"]))
 
     print(f"\n=== Match & Switched ===")
     switched_by_match_df = main_trials_df[
@@ -211,3 +216,33 @@ if __name__ == '__main__':
         )
         print(f"\n===== {condition.upper()} =====")
         print(model.summary())
+
+    print(f"\n=== Switched by Page Duration ===")
+    mismatch_df["duration_sq"] = mismatch_df["mean_page_duration"] ** 2
+    mismatch_df["log_duration"] = np.log(mismatch_df["mean_page_duration"] + 1)
+    mismatch_df["log_duration_stage2"] = np.log(mismatch_df["page_duration_stage2"] + 1)
+    for condition in ["C1", "C2", "C3"]:
+        condition_df = mismatch_df[mismatch_df["condition"] == condition]
+
+        model = smf.logit(
+            "switched ~ mean_page_duration + duration_sq + log_duration "
+            "+ confidence_gap ",
+            data=condition_df
+        ).fit(
+            cov_type="cluster",
+            cov_kwds={"groups": condition_df["participant_code"]}
+        )
+        print(f"\n===== {condition.upper()} =====")
+        print(model.summary())
+
+        model_stage2_full = smf.logit(
+            "switched ~ page_duration_stage2 + log_duration_stage2 + confidence_gap",
+            data=mismatch_df
+        ).fit()
+        print(model_stage2_full.summary())
+
+        model_a = smf.ols(
+            "log_duration ~ confidence_gap",
+            data=mismatch_df
+        ).fit()
+        print(model_a.summary())
