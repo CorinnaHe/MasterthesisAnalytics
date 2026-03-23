@@ -181,12 +181,12 @@ def inspect_reliance_based_on_condition(mismatch_df: pd.DataFrame):
         print(f"\nLikelihood ratio χ²({int(df_model)}) = {lr_stat:.2f}")
         print(f"p-value = {p_val:.3f}")
 
-def inspect_overreliance_based_on_condition(ai_wrong_df: pd.DataFrame):
-    print(ai_wrong_df.groupby("condition")["final_agree_ai"].mean())
+def inspect_appropriate_reliance_based_on_condition(df: pd.DataFrame, reliance_colum: str):
+    print(df.groupby("condition")[reliance_colum].mean())
 
     table = pd.crosstab(
-        ai_wrong_df["condition"],
-        ai_wrong_df["final_agree_ai"]
+        df["condition"],
+        df[reliance_colum]
     )
 
     print(table)
@@ -199,16 +199,25 @@ def inspect_overreliance_based_on_condition(ai_wrong_df: pd.DataFrame):
 
     # additional to Cao et al.
     model = smf.logit(
-        "final_agree_ai ~ C(condition)",
-        data=ai_wrong_df
+        f"{reliance_colum} ~ C(condition)",
+        data=df
     )
-
     result = model.fit(
         cov_type="cluster",
-        cov_kwds={"groups": ai_wrong_df["participant_code"]},
+        cov_kwds={"groups": df["participant_code"]},
         disp=False
     )
+    print(result.summary())
 
+    model = smf.logit(
+        f"{reliance_colum} ~ confidence_gap * C(condition)",
+        data=df
+    )
+    result = model.fit(
+        cov_type="cluster",
+        cov_kwds={"groups": df["participant_code"]},
+        disp=False
+    )
     print(result.summary())
 
 
@@ -368,9 +377,19 @@ if __name__ == '__main__':
     # Cao et al. 4.3.1
     inspect_reliance_based_on_condition(mismatch_df)
 
-    # Cao et al. 4.3.2
+    # Cao et al. 4.3.2 -> Overreliance
+    print("=== Overreliance ===")
     ai_wrong_df = mismatch_df[mismatch_df["ai_correct"] == False]
-    inspect_overreliance_based_on_condition(ai_wrong_df)
+    inspect_appropriate_reliance_based_on_condition(ai_wrong_df, "final_agree_ai")
+
+    print("=== Underreliance ===")
+    # added to Cao et al. -> Underreliance
+    ai_correct_df = mismatch_df[mismatch_df["ai_correct"] == True]
+    inspect_appropriate_reliance_based_on_condition(ai_correct_df, "final_agree_ai")
+
+    print("=== Appropriate Reliance ===")
+    # addded to Cao et al. -> Appropriate Reliance
+    inspect_appropriate_reliance_based_on_condition(mismatch_df, "appropriate_reliance")
 
     # Cao et al. 4.3.3
     cases = {
