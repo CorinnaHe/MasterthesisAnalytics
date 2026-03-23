@@ -181,12 +181,12 @@ def inspect_reliance_based_on_condition(mismatch_df: pd.DataFrame):
         print(f"\nLikelihood ratio χ²({int(df_model)}) = {lr_stat:.2f}")
         print(f"p-value = {p_val:.3f}")
 
-def inspect_overreliance_based_on_condition(overreliance_df: pd.DataFrame):
-    print(overreliance_df.groupby("condition")["final_agree_ai"].mean())
+def inspect_overreliance_based_on_condition(ai_wrong_df: pd.DataFrame):
+    print(ai_wrong_df.groupby("condition")["final_agree_ai"].mean())
 
     table = pd.crosstab(
-        overreliance_df["condition"],
-        overreliance_df["final_agree_ai"]
+        ai_wrong_df["condition"],
+        ai_wrong_df["final_agree_ai"]
     )
 
     print(table)
@@ -200,12 +200,12 @@ def inspect_overreliance_based_on_condition(overreliance_df: pd.DataFrame):
     # additional to Cao et al.
     model = smf.logit(
         "final_agree_ai ~ C(condition)",
-        data=overreliance_df
+        data=ai_wrong_df
     )
 
     result = model.fit(
         cov_type="cluster",
-        cov_kwds={"groups": overreliance_df["participant_code"]},
+        cov_kwds={"groups": ai_wrong_df["participant_code"]},
         disp=False
     )
 
@@ -350,7 +350,7 @@ def inspect_switching_behaviour(df):
 
 
 if __name__ == '__main__':
-    experiment_date = "2026-03-13"
+    experiment_date = "2026-03-20"
     (
         main_trials_df,
         control_measures_df,
@@ -369,8 +369,8 @@ if __name__ == '__main__':
     inspect_reliance_based_on_condition(mismatch_df)
 
     # Cao et al. 4.3.2
-    overreliance_df = mismatch_df[mismatch_df["ai_correct"] == False]
-    inspect_overreliance_based_on_condition(overreliance_df)
+    ai_wrong_df = mismatch_df[mismatch_df["ai_correct"] == False]
+    inspect_overreliance_based_on_condition(ai_wrong_df)
 
     # Cao et al. 4.3.3
     cases = {
