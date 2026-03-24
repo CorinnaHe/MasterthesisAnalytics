@@ -17,7 +17,6 @@ if __name__ == '__main__':
 
 
     # variables
-
     print(f"\n=== General Switching Behaviour ===")
     inspect_human_ai_match(main_trials_df, "global")
     print(f"\n=== C1 Switching Behaviour ===")
@@ -92,6 +91,7 @@ if __name__ == '__main__':
         main_trials_df["initial_agree_ai"] == 0
     ].copy()
     print(mismatch_df['switched'].value_counts(normalize=True))
+    mismatch_df = mismatch_df[mismatch_df["shared_ai_confidence"].isin([2, 3])].copy()
 
     print(f"\n=== Switched by Condition ===")
     print(mismatch_df.groupby('condition')['switched'].describe())
@@ -131,6 +131,20 @@ if __name__ == '__main__':
 
         model = smf.logit(
             f"switched ~ shared_ai_confidence",
+            data=condition_df
+        ).fit(
+            cov_type="cluster",
+            cov_kwds={"groups": condition_df["participant_code"]}
+        )
+        print(f"\n===== {condition.upper()} =====")
+        print(model.summary())
+
+    print(f"\n=== Switched by AI Confidence * Initial Confidence ===")
+    for condition in ["C1", "C2", "C3"]:
+        condition_df = mismatch_df[mismatch_df["condition"] == condition]
+
+        model = smf.logit(
+            f"switched ~ shared_ai_confidence * initial_confidence",
             data=condition_df
         ).fit(
             cov_type="cluster",
@@ -192,6 +206,45 @@ if __name__ == '__main__':
         mismatch_df["confidence_gap"],
         mismatch_df["switched"]
     ))
+
+    print(f"\n=== Switched by Confidence Gap * AI Correct ===")
+    for condition in ["C1", "C2", "C3"]:
+        condition_df = mismatch_df[mismatch_df["condition"] == condition]
+
+        model = smf.logit(
+            f"switched ~ confidence_gap * ai_correct",
+            data=condition_df
+        ).fit(
+            cov_type="cluster",
+            cov_kwds={"groups": condition_df["participant_code"]}
+        )
+        print(f"\n===== {condition.upper()} =====")
+        print(model.summary())
+
+    print(f"\n=== Switched by AI Correct ===")
+    print(mismatch_df.groupby(['condition', 'ai_correct'])['switched'].mean())
+    for condition in ["C1", "C2", "C3"]:
+        condition_df = mismatch_df[mismatch_df["condition"] == condition]
+        model = smf.logit(
+            f"switched ~ ai_correct",
+            data=condition_df
+        ).fit(
+            cov_type="cluster",
+            cov_kwds={"groups": condition_df["participant_code"]}
+        )
+        print(f"\n===== {condition.upper()} =====")
+        print(model.summary())
+
+        model = smf.logit(
+            f"switched ~ ai_correct + shared_ai_confidence",
+            data=condition_df
+        ).fit(
+            cov_type="cluster",
+            cov_kwds={"groups": condition_df["participant_code"]}
+        )
+        print(f"\n===== {condition.upper()} =====")
+        print(condition_df.groupby(["shared_ai_confidence", "ai_correct"])["switched"].mean())
+        print(model.summary())
 
     print(f"\n=== Switched by Confidence Gap * Condition + Initial Confidence ===")
     model = smf.logit(
