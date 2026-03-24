@@ -76,6 +76,41 @@ def _construct_reliance_metrics(trials: pd.DataFrame) -> pd.DataFrame:
          trials.loc[mask_set, "cp_contains_good"])
     ).astype(int)
 
+    trials["initial_pos_in_set"] = pd.NA
+    trials["final_pos_in_set"] = pd.NA
+
+    for col in ["initial_decision", "final_decision", "cp_set_el1", "cp_set_el2", "cp_set_el3"]:
+        trials[col] = trials[col].astype(str).str.strip().str.lower()
+
+    trials.loc[mask_set, "initial_pos_in_set"] = np.select(
+        [
+            trials.loc[mask_set, "initial_decision"].eq(trials.loc[mask_set, "cp_set_el1"]),
+            trials.loc[mask_set, "initial_decision"].eq(trials.loc[mask_set, "cp_set_el2"]),
+            trials.loc[mask_set, "initial_decision"].eq(trials.loc[mask_set, "cp_set_el3"]),
+        ],
+        [1, 2, 3],
+        default=-1
+    )
+    trials.loc[mask_set, "final_pos_in_set"] = np.select(
+        [
+            trials.loc[mask_set, "final_decision"].eq(trials.loc[mask_set, "cp_set_el1"]),
+            trials.loc[mask_set, "final_decision"].eq(trials.loc[mask_set, "cp_set_el2"]),
+            trials.loc[mask_set, "final_decision"].eq(trials.loc[mask_set, "cp_set_el3"]),
+        ],
+        [1, 2, 3],
+        default=-1
+    )
+
+    trials["final_choice_type"] = np.select(
+        [
+            trials["final_pos_in_set"] == 1,
+            trials["final_pos_in_set"].isin([2, 3]),
+            trials["final_pos_in_set"] == -1
+        ],
+        ["top1", "alternative", "outside"],
+        default="outside"
+    )
+
     # set_size
     cp_cols = [
         "cp_contains_poor",

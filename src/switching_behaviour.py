@@ -18,16 +18,16 @@ if __name__ == '__main__':
 
     # variables
     print(f"\n=== General Switching Behaviour ===")
-    inspect_human_ai_match(main_trials_df, "global")
+    #inspect_human_ai_match(main_trials_df, "global")
     print(f"\n=== C1 Switching Behaviour ===")
     c1_df = main_trials_df[(main_trials_df["condition"] == "C1")]
-    inspect_human_ai_match(c1_df, "global")
+    #inspect_human_ai_match(c1_df, "global")
     print(f"\n=== C2 Switching Behaviour ===")
     c2_df = main_trials_df[(main_trials_df["condition"] == "C2")]
-    inspect_human_ai_match(c2_df, "global")
+    #inspect_human_ai_match(c2_df, "global")
     print(f"\n=== C3 Switching Behaviour ===")
     c3_df = main_trials_df[(main_trials_df["condition"] == "C3")]
-    inspect_human_ai_match(c3_df, "global")
+    #inspect_human_ai_match(c3_df, "global")
 
     print(f"\n=== Inspect Page Times ===")
     print(main_trials_df.groupby("condition")["mean_page_duration"].agg(["mean", "std", "count"]))
@@ -91,7 +91,7 @@ if __name__ == '__main__':
         main_trials_df["initial_agree_ai"] == 0
     ].copy()
     print(mismatch_df['switched'].value_counts(normalize=True))
-    mismatch_df = mismatch_df[mismatch_df["shared_ai_confidence"].isin([2, 3])].copy()
+    #mismatch_df = mismatch_df[mismatch_df["shared_ai_confidence"].isin([2, 3])].copy()
 
     print(f"\n=== Switched by Condition ===")
     print(mismatch_df.groupby('condition')['switched'].describe())
@@ -299,3 +299,64 @@ if __name__ == '__main__':
             data=mismatch_df
         ).fit()
         print(model_a.summary())
+
+    print("=== Switched to what ===")
+    switched_by_disagree = mismatch_df[
+        mismatch_df["switched"] == 1
+        ].copy()
+    print(switched_by_disagree.groupby("condition")["final_agree_ai"].mean())
+    print(switched_by_disagree.groupby(["condition", "shared_ai_confidence"])["final_agree_ai"].mean())
+
+
+    c3_disagree = mismatch_df[mismatch_df["condition"] == "C3"]
+    print(c3_df.groupby("initial_agree_ai")["initial_pos_in_set"].value_counts(dropna=False))
+    model = smf.logit(
+        "switched ~  C(initial_pos_in_set) + shared_ai_confidence + initial_confidence + ai_correct",
+        data=c3_df
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": c3_df["participant_code"]}
+    )
+    print(model.summary())
+
+    c3_switched = main_trials_df[
+        (main_trials_df["switched"] == 1) & (main_trials_df["condition"] == "C3")
+        ].copy()
+    print(c3_switched.groupby("shared_ai_confidence")["final_agree_ai"].mean())
+
+    c3_switched["final_choice_type"] = pd.Categorical(
+        c3_switched["final_choice_type"],
+        categories=["top1", "alternative", "outside"]
+    )
+
+    c3_switched["final_choice_type_code"] = c3_switched["final_choice_type"].cat.codes
+    print(c3_switched.groupby("shared_ai_confidence")["final_choice_type"].value_counts(normalize=True))
+    print(c3_switched["initial_pos_in_set"].value_counts(normalize=True) * 100)
+    print(c3_switched["final_pos_in_set"].value_counts(normalize=True) * 100)
+    print(pd.crosstab(
+        c3_switched["initial_pos_in_set"],
+        c3_switched["final_pos_in_set"]
+    ))
+
+    c3_switched["moved_to_top1"] = (c3_switched["final_pos_in_set"] == 1).astype(int)
+    model = smf.logit(
+"moved_to_top1 ~ C(initial_pos_in_set)",
+        data=c3_switched
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": c3_switched["participant_code"]}
+    )
+    print(model.summary())
+
+    print(print(c3_switched.groupby(["ai_correct", "final_choice_type"]).size()))
+    model = smf.mnlogit(
+        "final_choice_type_code ~ C(initial_pos_in_set) + shared_ai_confidence",
+        data=c3_switched
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": c3_switched["participant_code"]}
+    )
+    print(model.summary())
+
+    c3_switched["ignored_set"] = c3_switched["final_pos_in_set"].isna().astype(int)
+    print(c3_switched.groupby("set_size")["ignored_set"].mean())
