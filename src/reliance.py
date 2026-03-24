@@ -391,6 +391,20 @@ if __name__ == '__main__':
     # addded to Cao et al. -> Appropriate Reliance
     inspect_appropriate_reliance_based_on_condition(mismatch_df, "appropriate_reliance")
 
+    #added
+    print("=== AI Confidence vs. AI Correctness ===")
+    # additional to Cao et al.
+    model = smf.logit(
+        f"final_agree_ai ~ ai_correct * shared_ai_confidence",
+        data=mismatch_df,
+    )
+    result = model.fit(
+        cov_type="cluster",
+        cov_kwds={"groups": mismatch_df["participant_code"]},
+        disp=False
+    )
+    print(result.summary())
+
     # Cao et al. 4.3.3
     cases = {
         "match_correct":
