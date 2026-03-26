@@ -5,6 +5,64 @@ from data_loader import load_experiment_data
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 from scipy.stats import ttest_ind
+from scipy.stats import kruskal
+import pandas as pd
+from scipy.stats import chi2_contingency
+
+def full_balance_table(df: pd.DataFrame):
+    rows = []
+
+    # Continuous
+    numeric_cols = [
+        "age",
+        "cognitive_load_mental",
+        "ai_literacy_sk9",
+        "ai_literacy_sk10",
+        "ai_literacy_ail2",
+        "ai_literacy_ue2",
+        "ai_attitude",
+        "ai_trust",
+        "risk_aversion"
+    ]
+
+    for var in numeric_cols:
+        row = {"variable": var}
+
+        groups = []
+        for cond in ["C1", "C2", "C3"]:
+            data = df[df["condition"] == cond][var].dropna()
+            row[cond] = f"{data.mean():.2f} ({data.std():.2f})"
+            groups.append(data)
+
+        stat, p = kruskal(*groups)
+        row["test"] = f"H={stat:.2f}"
+        row["p"] = f"{p:.4f}"
+
+        rows.append(row)
+
+    # Categorical
+    categorical_vars = ["gender", "education", "domain_experience"]
+
+    for var in categorical_vars:
+        contingency = pd.crosstab(df[var], df["condition"])
+        percent = contingency.div(contingency.sum(axis=0), axis=1) * 100
+
+        chi2, p, dof, _ = chi2_contingency(contingency)
+
+        for category in contingency.index:
+            row = {"variable": f"{var}: {category}"}
+
+            for cond in ["C1", "C2", "C3"]:
+                count = contingency.loc[category, cond]
+                perc = percent.loc[category, cond]
+                row[cond] = f"{count} ({perc:.1f}%)"
+
+            row["test"] = f"Chi2={chi2:.2f}"
+            row["p"] = f"{p:.4f}"
+
+            rows.append(row)
+
+    return pd.DataFrame(rows)
 
 def print_statistics(df: pd.DataFrame):
     numeric_cols = [
@@ -16,8 +74,7 @@ def print_statistics(df: pd.DataFrame):
         "ai_literacy_ue2",
         "ai_attitude",
         "ai_trust",
-        "risk_aversion",
-        "domain_experience"
+        "risk_aversion"
     ]
 
     with pd.option_context(
@@ -49,6 +106,32 @@ def print_statistics(df: pd.DataFrame):
         "percent": domain_experience_percent
     })
     print(domain_experience_summary)
+
+    print("=== Across Conditions ===")
+    with pd.option_context(
+            "display.max_rows", None,
+            "display.max_columns", None
+    ):
+        print(full_balance_table(df))
+
+
+    for var in numeric_cols:
+        groups = [
+            df[df["condition"] == "C1"][var],
+            df[df["condition"] == "C2"][var],
+            df[df["condition"] == "C3"][var]
+        ]
+
+        stat, p = kruskal(*groups)
+        print(f"{var}: H={stat:.3f}, p={p:.3f}")
+
+    categorical_vars = ["gender", "education", "domain_experience"]
+
+    for var in categorical_vars:
+        contingency = pd.crosstab(df[var], df["condition"])
+        chi2, p, dof, _ = chi2_contingency(contingency)
+
+        print(f"{var}: chi2={chi2:.3f}, p={p:.3f}")
 
 
 def analyze_mental_load(
@@ -163,8 +246,21 @@ if __name__ == '__main__':
 
     ) = load_experiment_data(f"all_apps_wide-{experiment_date}.csv")
 
+    condition_df = (
+        main_trials_df
+        .groupby('participant_code')['condition']
+        .first()  # or another aggregation if needed
+        .reset_index()
+    )
+
+    df = control_measures_df.merge(
+        condition_df,
+        on='participant_code',
+        how='left'
+    )
+
     # Verteilung Control Measures & Mental Load
-    print_statistics(control_measures_df)
+    print_statistics(df)
 
 
     # Mental Load

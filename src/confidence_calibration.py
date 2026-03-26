@@ -11,6 +11,8 @@ if __name__ == '__main__':
     experiment_date = "2026-03-20"
     (
         main_trials_df,
+        _,
+        participant_stats,
         *_
 
     ) = load_experiment_data(f"all_apps_wide-{experiment_date}.csv")
@@ -60,6 +62,18 @@ if __name__ == '__main__':
 
     print(ece_combined.head())
     print(ece_combined.describe())
+
+    print("\n=== ECE by Strategy ===")
+    ece_combined = ece_combined.merge(participant_stats[['participant_code', 'strategy']], on='participant_code',
+                                          how='left')
+
+    print(ece_combined.groupby("strategy")[["ECE_initial", "ECE_final"]].mean())
+    model_ece = smf.ols(
+        "ECE_final ~ C(strategy)",
+        data=ece_combined
+    ).fit()
+
+    print(model_ece.summary())
 
     print(f"\n=== Instance Level ===")
     mismatch_df = main_trials_df[

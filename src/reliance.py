@@ -198,8 +198,11 @@ def inspect_appropriate_reliance_based_on_condition(df: pd.DataFrame, reliance_c
     print("df:", dof)
 
     # additional to Cao et al.
+    print("\n=== By Strategy ===")
+    print(df.groupby(["condition", "strategy"])[reliance_colum].mean())
+
     model = smf.logit(
-        f"{reliance_colum} ~ C(condition)",
+        f"{reliance_colum} ~ C(condition) * C(strategy)",
         data=df
     )
     result = model.fit(
@@ -363,9 +366,11 @@ if __name__ == '__main__':
     (
         main_trials_df,
         control_measures_df,
+        participant_stats,
         *_
 
     ) = load_experiment_data(f"all_apps_wide-{experiment_date}.csv")
+    main_trials_df = main_trials_df.merge(participant_stats[['participant_code', 'strategy']], on='participant_code', how='left')
     main_trials_df["final_agree_ai"] = main_trials_df["final_agree_ai"].astype(int)
 
     # Cao et al. 4.2

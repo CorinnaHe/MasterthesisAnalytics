@@ -18,16 +18,16 @@ if __name__ == '__main__':
 
     # variables
     print(f"\n=== General Switching Behaviour ===")
-    #inspect_human_ai_match(main_trials_df, "global")
+    inspect_human_ai_match(main_trials_df, "global")
     print(f"\n=== C1 Switching Behaviour ===")
     c1_df = main_trials_df[(main_trials_df["condition"] == "C1")]
-    #inspect_human_ai_match(c1_df, "global")
+    inspect_human_ai_match(c1_df, "global")
     print(f"\n=== C2 Switching Behaviour ===")
     c2_df = main_trials_df[(main_trials_df["condition"] == "C2")]
-    #inspect_human_ai_match(c2_df, "global")
+    inspect_human_ai_match(c2_df, "global")
     print(f"\n=== C3 Switching Behaviour ===")
     c3_df = main_trials_df[(main_trials_df["condition"] == "C3")]
-    #inspect_human_ai_match(c3_df, "global")
+    inspect_human_ai_match(c3_df, "global")
 
     print(f"\n=== Inspect Page Times ===")
     print(main_trials_df.groupby("condition")["mean_page_duration"].agg(["mean", "std", "count"]))

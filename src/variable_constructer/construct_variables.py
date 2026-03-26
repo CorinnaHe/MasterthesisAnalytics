@@ -263,6 +263,8 @@ def create_participant_stats(main_trials_df: pd.DataFrame) -> pd.DataFrame:
     )
     participant_stats["mean_page_duration"] = (participant_stats["mean_page_duration_stage1"] + participant_stats["mean_page_duration_stage2"])/2
     participant_stats["delta_page_duration"] = (participant_stats["mean_page_duration_stage1"] - participant_stats["mean_page_duration_stage2"])
+    participant_stats["initial_confidence_calibration_mean"] = ((participant_stats["initial_human_conf_mean"]-1)/4 - participant_stats["initial_accuracy"])
+    participant_stats["final_confidence_calibration_mean"] = ((participant_stats["final_human_conf_mean"]-1)/4 - participant_stats["final_accuracy"])
     participant_stats = participant_stats.fillna(0)
     participant_stats = participant_stats.reset_index()
 

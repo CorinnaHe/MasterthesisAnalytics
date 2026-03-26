@@ -9,6 +9,89 @@ from scipy.stats import chi2_contingency
 from scipy.stats import kruskal
 import scikit_posthocs as sp
 import statsmodels.formula.api as smf
+import statsmodels.formula.api as smf
+
+
+def within_condition_strategy_analysis(participant_stats: pd.DataFrame):
+    conditions = participant_stats["condition"].unique()
+
+    results = {}
+
+    for cond in conditions:
+        print(f"\n===== CONDITION: {cond} =====")
+
+        df_cond = participant_stats[participant_stats["condition"] == cond]
+
+        # --- Descriptives ---
+        desc = df_cond.groupby("strategy")["final_accuracy"].describe()
+        print("\nDescriptives:\n", desc)
+
+        # --- Prepare groups ---
+        strategies = df_cond["strategy"].unique()
+        groups = [
+            df_cond[df_cond["strategy"] == strat]["final_accuracy"]
+            for strat in strategies
+        ]
+
+        # Only test if at least 2 groups have data
+        if len(groups) < 2:
+            print("Not enough groups for statistical test.")
+            continue
+
+        # --- Kruskal-Wallis ---
+        stat, p = kruskal(*groups)
+        print("\nKruskal-Wallis H:", stat)
+        print("p-value:", p)
+
+        # --- Effect size (eta²) ---
+        H = stat
+        k = len(groups)
+        n = len(df_cond)
+
+        eta_sq = (H - k + 1) / (n - k) if (n - k) > 0 else np.nan
+        print("Effect size (eta²):", eta_sq)
+
+        # --- Posthoc Dunn ---
+        try:
+            posthoc = sp.posthoc_dunn(
+                df_cond,
+                val_col="final_accuracy",
+                group_col="strategy",
+                p_adjust="bonferroni"
+            )
+            print("\nPosthoc Dunn:\n", posthoc)
+        except Exception as e:
+            print("Posthoc failed:", e)
+            posthoc = None
+
+        # --- Store results ---
+        results[cond] = {
+            "H": stat,
+            "p": p,
+            "eta_sq": eta_sq,
+            "posthoc": posthoc,
+            "descriptives": desc
+        }
+
+    return results
+
+
+def check_selective_dominance(participant_stats: pd.DataFrame):
+    conditions = participant_stats["condition"].unique()
+
+    for cond in conditions:
+        df_cond = participant_stats[participant_stats["condition"] == cond]
+
+        means = df_cond.groupby("strategy")["final_accuracy"].mean().sort_values(ascending=False)
+
+        print(f"\n===== {cond} =====")
+        print(means)
+
+        if "Selective AI reliance" in means.index:
+            rank = list(means.index).index("Selective AI reliance") + 1
+            print(f"Selective rank: {rank}/{len(means)}")
+
+
 
 if __name__ == '__main__':
     experiment_date = "2026-03-20"
@@ -100,10 +183,41 @@ if __name__ == '__main__':
 
     print("Effect size (eta²):", eta_sq)
 
+    within_condition_strategy_analysis(participant_stats)
+    check_selective_dominance(participant_stats)
+
+    model_total = smf.ols(
+        "final_accuracy ~ C(condition)",
+        data=participant_stats
+    ).fit()
+
+    print(model_total.summary())
+
+    # mediation
+    model = smf.ols(
+        "final_accuracy ~ C(strategy) + C(condition)",
+        data=participant_stats
+    ).fit()
+    print(model.summary())
+
+    # interaction model
+    model = smf.ols(
+        "final_accuracy ~ C(strategy) * C(condition)",
+        data=participant_stats
+    ).fit()
+    print(model.summary())
 
     participant_stats["strategy_cat"] = participant_stats["strategy"].astype("category")
     participant_stats["strategy_code"] = participant_stats["strategy_cat"].cat.codes
     print(participant_stats["strategy_cat"].cat.categories)
+
+
+    model_strategy = smf.mnlogit(
+        "strategy_code ~ C(condition)",
+        data=participant_stats
+    ).fit()
+
+    print(model_strategy.summary())
 
     participant_stats = participant_stats.merge(
         control_measures_df,
@@ -115,6 +229,8 @@ if __name__ == '__main__':
             strategy_code ~
             C(condition) +
             initial_human_conf_mean +
+            initial_confidence_calibration_mean +
+            final_confidence_calibration_mean +
             ai_literacy +
             experience +
             risk_aversion +

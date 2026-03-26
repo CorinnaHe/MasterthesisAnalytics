@@ -43,6 +43,16 @@ def analyze_case_difficulty(
 
     print(model2.summary())
 
+    model3 = smf.logit(
+        f"{final_correct_column} ~ C({difficulty_column}, Treatment(reference='easy')) + C({condition_column}) * shared_ai_confidence",
+        data=df_model
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": df_model[participant_column]}
+    )
+
+    print(model3.summary())
+
     # Visualization
     if plot:
         plt.figure(figsize=(7,5))
@@ -241,3 +251,26 @@ if __name__ == '__main__':
 
     #analyze_set_size(df, difficulty_column="ai_difficulty")
     analyze_set_size_switching(mismatch_df, difficulty_column="human_difficulty")
+
+    print("\n=== C1/C2 wrong, C3 includes correct ===")
+    hard_ai_cases = df[df["ai_difficulty"] == "hard"].copy()
+
+    print("\n=== Logistic Regression with condition interaction ===")
+
+    model2 = smf.logit(
+        f"final_correct ~  C(condition)",
+        data=hard_ai_cases
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": hard_ai_cases["participant_code"]}
+    )
+    print(model2.summary())
+
+    model2 = smf.logit(
+        f"final_correct ~  C(condition) * shared_ai_confidence",
+        data=hard_ai_cases
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": hard_ai_cases["participant_code"]}
+    )
+    print(model2.summary())
