@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import statsmodels.formula.api as smf
+from scipy.stats import chi2_contingency
 
 from data_loader import load_experiment_data
 from inspect_data import inspect_human_ai_match
@@ -93,7 +94,7 @@ if __name__ == '__main__':
     print(mismatch_df['switched'].value_counts(normalize=True))
     #mismatch_df = mismatch_df[mismatch_df["shared_ai_confidence"].isin([2, 3])].copy()
 
-    print(f"\n=== Switched by Condition ===")
+    print(f"\n=== A1: Switched by Condition ===")
     print(mismatch_df.groupby('condition')['switched'].describe())
     model = smf.logit(
         "switched ~ condition",
@@ -104,7 +105,8 @@ if __name__ == '__main__':
     )
     print(model.summary())
 
-    print(f"\n=== Switched by Initial Confidence ===")
+    print(f"\n=== A2:  "
+          f"Switched by Initial Confidence ===")
     print(mismatch_df.groupby('initial_confidence')['switched'].describe())
 
     for condition in ["C1", "C2", "C3"]:
@@ -120,7 +122,7 @@ if __name__ == '__main__':
         print(f"\n===== {condition.upper()} =====")
         print(model.summary())
 
-    print(f"\n=== Switched by AI Confidence ===")
+    print(f"\n=== A3: Switched by AI Confidence ===")
     print(mismatch_df.groupby('shared_ai_confidence')['switched'].describe())
     print(mismatch_df.groupby(['condition', 'shared_ai_confidence'])['switched'].describe())
     print(mismatch_df.groupby(['condition', 'set_size'])['switched'].describe())
@@ -139,12 +141,12 @@ if __name__ == '__main__':
         print(f"\n===== {condition.upper()} =====")
         print(model.summary())
 
-    print(f"\n=== Switched by AI Confidence * Initial Confidence ===")
+    print(f"\n=== Switched by AI Confidence + Initial Confidence ===")
     for condition in ["C1", "C2", "C3"]:
         condition_df = mismatch_df[mismatch_df["condition"] == condition]
 
         model = smf.logit(
-            f"switched ~ shared_ai_confidence * initial_confidence",
+            f"switched ~ shared_ai_confidence + initial_confidence",
             data=condition_df
         ).fit(
             cov_type="cluster",
@@ -153,7 +155,7 @@ if __name__ == '__main__':
         print(f"\n===== {condition.upper()} =====")
         print(model.summary())
 
-    print(f"\n=== Switched by Confidence Gap ===")
+    print(f"\n=== A5: Switched by Confidence Gap ===")
     print(
         main_trials_df.groupby("condition")["confidence_gap"].describe())
 
@@ -170,12 +172,40 @@ if __name__ == '__main__':
         print(f"\n===== {condition.upper()} =====")
         print(model.summary())
 
-    print(f"\n=== Switched by Confidence Gap + Initial Confidence ===")
+    print(f"\n=== A6a: Switched by Confidence Gap + Initial Confidence ===")
     for condition in ["C1", "C2", "C3"]:
         condition_df = mismatch_df[mismatch_df["condition"] == condition]
 
         model = smf.logit(
             f"switched ~ confidence_gap + initial_confidence",
+            data=condition_df
+        ).fit(
+            cov_type="cluster",
+            cov_kwds={"groups": condition_df["participant_code"]}
+        )
+        print(f"\n===== {condition.upper()} =====")
+        print(model.summary())
+
+    print(f"\n=== A6b: Switched by Confidence Gap + AI Confidence ===")
+    for condition in ["C1", "C2", "C3"]:
+        condition_df = mismatch_df[mismatch_df["condition"] == condition]
+
+        model = smf.logit(
+            f"switched ~ confidence_gap + shared_ai_confidence",
+            data=condition_df
+        ).fit(
+            cov_type="cluster",
+            cov_kwds={"groups": condition_df["participant_code"]}
+        )
+        print(f"\n===== {condition.upper()} =====")
+        print(model.summary())
+
+    print(f"\n=== A6c: Switched by Initial Confidence + AI Confidence ===")
+    for condition in ["C1", "C2", "C3"]:
+        condition_df = mismatch_df[mismatch_df["condition"] == condition]
+
+        model = smf.logit(
+            f"switched ~ initial_confidence + shared_ai_confidence",
             data=condition_df
         ).fit(
             cov_type="cluster",
@@ -207,12 +237,12 @@ if __name__ == '__main__':
         mismatch_df["switched"]
     ))
 
-    print(f"\n=== Switched by Confidence Gap * AI Correct ===")
+    print(f"\n=== Switched by Confidence Gap + AI Correct ===")
     for condition in ["C1", "C2", "C3"]:
         condition_df = mismatch_df[mismatch_df["condition"] == condition]
 
         model = smf.logit(
-            f"switched ~ confidence_gap * ai_correct",
+            f"switched ~ confidence_gap + ai_correct",
             data=condition_df
         ).fit(
             cov_type="cluster",
@@ -221,7 +251,7 @@ if __name__ == '__main__':
         print(f"\n===== {condition.upper()} =====")
         print(model.summary())
 
-    print(f"\n=== Switched by AI Correct ===")
+    print(f"\n=== A8:  Switched by AI Correct ===")
     print(mismatch_df.groupby(['condition', 'ai_correct'])['switched'].mean())
     for condition in ["C1", "C2", "C3"]:
         condition_df = mismatch_df[mismatch_df["condition"] == condition]
@@ -246,7 +276,7 @@ if __name__ == '__main__':
         print(condition_df.groupby(["shared_ai_confidence", "ai_correct"])["switched"].mean())
         print(model.summary())
 
-    print(f"\n=== Switched by Confidence Gap * Condition + Initial Confidence ===")
+    print(f"\n=== A11: Switched by Confidence Gap * Condition + Initial Confidence ===")
     model = smf.logit(
         "switched ~ confidence_gap * C(condition) + initial_confidence",
         data=mismatch_df
@@ -360,3 +390,38 @@ if __name__ == '__main__':
 
     c3_switched["ignored_set"] = c3_switched["final_pos_in_set"].isna().astype(int)
     print(c3_switched.groupby("set_size")["ignored_set"].mean())
+
+    # Does initial position affect switching?
+    c3_df = main_trials_df[(main_trials_df["condition"] == "C3")].copy()
+    model = smf.logit(
+        "switched ~ C(initial_pos_in_set) + initial_confidence + ai_correct + shared_ai_confidence",
+        data=c3_df
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": c3_df["participant_code"]}
+    )
+    print(model.summary())
+
+    # Does initial position affect moving to top1?
+    table_counts = pd.crosstab(
+        c3_switched["initial_pos_in_set"],
+        c3_switched["moved_to_top1"]
+    )
+    table_counts.columns = ["not_moved_to_top1", "moved_to_top1"]
+    table_counts["total"] = table_counts.sum(axis=1)
+    table_counts["share_moved_to_top1"] = table_counts["moved_to_top1"] / table_counts["total"]
+    print("=== Descriptive Table ===")
+    with pd.option_context(
+            "display.max_rows", None,
+            "display.max_columns", None
+    ):
+        print(table_counts)
+
+
+
+    chi2, p, dof, expected = chi2_contingency(table_counts[["not_moved_to_top1", "moved_to_top1"]])
+
+    print("\n=== Chi-square test ===")
+    print(f"Chi2 statistic: {chi2:.4f}")
+    print(f"p-value: {p:.6f}")
+    print(f"Degrees of freedom: {dof}")
