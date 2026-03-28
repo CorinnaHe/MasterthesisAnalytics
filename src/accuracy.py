@@ -110,7 +110,7 @@ if __name__ == '__main__':
     )
     print(model.summary())
 
-    print("=== Logistic Regression with interaction correct ~ condition * ai_correct + case_id ===")
+    print("=== A3: Logistic Regression with interaction correct ~ condition * ai_correct + case_id ===")
     model = smf.logit(
         "final_correct ~ C(condition) * ai_correct + C(case_id)",
         data=main_trials_df
@@ -120,7 +120,7 @@ if __name__ == '__main__':
     )
     print(model.summary())
 
-    print("=== Logistic Regression with interaction correct ~ condition * shared_ai_confidence ===")
+    print("=== A4: Logistic Regression with interaction correct ~ condition * shared_ai_confidence ===")
     model = smf.logit(
         "final_correct ~ C(condition) * shared_ai_confidence",
         data=main_trials_df
@@ -130,19 +130,29 @@ if __name__ == '__main__':
     )
     print(model.summary())
 
-    print("=== Logistic Regression C3 only ~ set_size + ai_correct ===")
-    c3_df = main_trials_df[
-            main_trials_df["condition"] == "C3"
-        ].copy()
-
+    print("=== A7: Roboustness Check Case_id ===")
     model = smf.logit(
-        "final_correct ~ set_size + ai_correct",
-        data= c3_df
+        "final_correct ~ C(condition) * shared_ai_confidence + C(case_id)",
+        data=main_trials_df
     ).fit(
         cov_type="cluster",
-        cov_kwds={"groups": c3_df["participant_code"]}
+        cov_kwds={"groups": main_trials_df["participant_code"]}
     )
     print(model.summary())
+
+    conditions = main_trials_df["condition"].unique()
+    for cond in conditions:
+        df_cond = main_trials_df[main_trials_df["condition"] == cond]
+        print(f"=== A5: Logistic Regression {cond} only ~ shared_ai_confidence * ai_correct ===")
+
+        model = smf.logit(
+            "final_correct ~ shared_ai_confidence * ai_correct",
+            data=df_cond
+        ).fit(
+            cov_type="cluster",
+            cov_kwds={"groups": df_cond["participant_code"]}
+        )
+        print(model.summary())
 
     print("=== Robustness Checks with Controls ===")
     formula = """
