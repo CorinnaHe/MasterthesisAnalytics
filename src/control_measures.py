@@ -237,6 +237,64 @@ def analyze_mental_load(
     print(model4.summary())
 
 
+def analyze_ai_attitude_trust(
+        main_trials_df,
+        control_measures_df,
+):
+    condition_df = (
+        main_trials_df
+        .groupby('participant_code')['condition']
+        .first()  # or another aggregation if needed
+        .reset_index()
+    )
+
+    control_measures_df = control_measures_df.merge(
+        condition_df,
+        on='participant_code',
+        how='left'
+    )
+
+
+
+    with pd.option_context(
+            "display.max_rows", None,
+            "display.max_columns", None
+    ):
+        print(control_measures_df.groupby("condition").describe())
+
+        print("\n=== AI Attitude SUMMARY ===")
+        print(
+            control_measures_df
+            .groupby("condition")["ai_attitude"].describe()
+        )
+
+
+    print("\n=== AI Attitude - Condition Linear Regression ===")
+    model = smf.ols(
+        "ai_attitude ~ C(condition)",
+        data=control_measures_df
+    ).fit()
+    print(model.summary())
+
+    with pd.option_context(
+            "display.max_rows", None,
+            "display.max_columns", None
+    ):
+        print("\n=== AI Trust SUMMARY ===")
+        print(
+            control_measures_df
+            .groupby("condition")["ai_trust"].describe()
+        )
+
+    # AI Trust
+    print("\n=== AI Trust - Condition Linear Regression ===")
+    model = smf.ols(
+        "ai_trust ~ C(condition)",
+        data=control_measures_df
+    ).fit()
+    print(model.summary())
+
+
 if __name__ == '__main__':
     experiment_date = "2026-03-20"
     (
@@ -265,5 +323,8 @@ if __name__ == '__main__':
 
     # Mental Load
     analyze_mental_load(main_trials_df, control_measures_df)
+
+    # AI Trust & attitude
+    analyze_ai_attitude_trust(main_trials_df, control_measures_df)
 
 

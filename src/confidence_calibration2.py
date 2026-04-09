@@ -183,3 +183,35 @@ if __name__ == '__main__':
         groups=incorrect_df["participant_code"]
     )
     print(model_incorrect.fit().summary())
+
+    print("\n=== Simple Calibration Model ===")
+    model = smf.ols(
+        "final_calibration_score ~ C(condition)",
+        data=main_trials_df
+    ).fit(cov_type="cluster", cov_kwds={"groups": main_trials_df["participant_code"]})
+    print(model.summary())
+
+    model = smf.ols(
+        "final_calibration_score ~ C(condition) + C(case_id)",
+        data=main_trials_df
+    ).fit(cov_type="cluster", cov_kwds={"groups": main_trials_df["participant_code"]})
+    print(model.summary())
+
+    model = smf.ols(
+        "final_calibration_score ~ C(condition) + ai_correct + experience + ai_literacy",
+        data=main_trials_df
+    ).fit(cov_type="cluster", cov_kwds={"groups": main_trials_df["participant_code"]})
+    print(model.summary())
+
+    # Additional Models for Decomposition
+    model = smf.ols(
+        "final_confidence_norm ~ C(condition)",
+        data=main_trials_df
+    ).fit(cov_type="cluster", cov_kwds={"groups": main_trials_df["participant_code"]})
+    print(model.summary())
+
+    model  = smf.ols(
+        "final_correct ~ C(condition)",
+        data=main_trials_df
+    ).fit(cov_type="cluster", cov_kwds={"groups": main_trials_df["participant_code"]})
+    print(model.summary())

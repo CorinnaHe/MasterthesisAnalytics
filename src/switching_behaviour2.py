@@ -108,7 +108,7 @@ if __name__ == '__main__':
 
     cluster_summary = (
         participant_stats
-        .groupby("cluster")
+        .groupby("strategy")
         .mean(numeric_only=True)
     )
     with pd.option_context(
@@ -135,6 +135,11 @@ if __name__ == '__main__':
         participant_stats["condition"],
         participant_stats["strategy"],
         normalize="index"
+    )
+    print(strategy_by_condition)
+    strategy_by_condition = pd.crosstab(
+        participant_stats["condition"],
+        participant_stats["strategy"]
     )
     print(strategy_by_condition)
     table = pd.crosstab(

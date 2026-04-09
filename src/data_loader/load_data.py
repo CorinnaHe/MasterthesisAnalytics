@@ -140,6 +140,8 @@ def _extract_single_block(df, prefix, mandatory_col):
 
 
 def _filter_df(df: pd.DataFrame) -> pd.DataFrame:
+    # exclude failed checks
+    df = df[df["checks.1.player.failed_checks"] <= 1]
     # exclude bots
     df = df[df["participant._is_bot"] == 0]
     # completed participants
@@ -147,8 +149,6 @@ def _filter_df(df: pd.DataFrame) -> pd.DataFrame:
         df["participant._index_in_pages"] >=
         (df["participant._max_page_index"] - 1)
         ]
-    # exclude failed checks
-    df = df[df["checks.1.player.failed_checks"] <= 1]
 
     return df
 
@@ -157,6 +157,7 @@ def _filter_df(df: pd.DataFrame) -> pd.DataFrame:
 def load_experiment_data(file_name: str) -> pd.DataFrame:
     df_raw = pd.read_csv(RAW_DATA_DIR / file_name)
     df_raw = _filter_df(df_raw)
+    df_raw.to_csv(RAW_DATA_DIR / "df_cleaned.csv", index=False)
 
     case_df = pd.read_csv(RAW_DATA_DIR / "tasks_main_trials.csv")
 

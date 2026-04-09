@@ -76,6 +76,19 @@ def _construct_reliance_metrics(trials: pd.DataFrame) -> pd.DataFrame:
          trials.loc[mask_set, "cp_contains_good"])
     ).astype(int)
 
+    trials["initial_top_1_agree"] = pd.NA
+
+    # point-based (C1, C2): same as initial_agree_ai
+    trials.loc[mask_pp, "initial_top_1_agree"] = (
+        trials.loc[mask_pp, "initial_agree_ai"]
+    ).astype(int)
+
+    # set-based (C3): match with top-1 element of the set
+    trials.loc[mask_set, "initial_top_1_agree"] = (
+        trials.loc[mask_set, "initial_decision"]
+        .eq(trials.loc[mask_set, "cp_set_el1"])
+    ).astype(int)
+
     trials["initial_pos_in_set"] = pd.NA
     trials["final_pos_in_set"] = pd.NA
 
@@ -143,6 +156,7 @@ def _construct_reliance_metrics(trials: pd.DataFrame) -> pd.DataFrame:
             + (conf < 0.625).astype(int) * 1
     )
     trials.loc[mask_set, "shared_ai_confidence"] = trials.loc[mask_set, "set_size"].map({1: 3, 2: 2, 3: 1})
+    trials["shared_ai_confidence"] = trials["shared_ai_confidence"].astype(int)
 
     # human-ai confidence gap: shared ai confidence norm - initial human confidence norm
     trials["initial_confidence_norm"] = (trials["initial_confidence"] - 1) / 4
@@ -163,6 +177,10 @@ def _construct_reliance_metrics(trials: pd.DataFrame) -> pd.DataFrame:
 
     trials["switched_to_ai"] = (
         ~trials["initial_agree_ai"] & trials["final_agree_ai"]
+    ).astype(int)
+
+    trials["switched_to_or_within_ai"] = (
+        trials["switched"] & trials["final_agree_ai"]
     ).astype(int)
 
     # reliance

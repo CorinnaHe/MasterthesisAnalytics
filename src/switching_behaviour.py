@@ -16,19 +16,21 @@ if __name__ == '__main__':
     print(main_trials_df.groupby('condition')['participant_code'].nunique())
     main_trials_df["confidence_gap"] = main_trials_df["confidence_gap"].astype(float)
 
+    main_trials_df['ai_not_low'] = (main_trials_df['shared_ai_norm'] > 0).astype(int)
+
 
     # variables
     print(f"\n=== General Switching Behaviour ===")
-    inspect_human_ai_match(main_trials_df, "global")
+    #inspect_human_ai_match(main_trials_df, "global")
     print(f"\n=== C1 Switching Behaviour ===")
     c1_df = main_trials_df[(main_trials_df["condition"] == "C1")]
-    inspect_human_ai_match(c1_df, "global")
+    #inspect_human_ai_match(c1_df, "global")
     print(f"\n=== C2 Switching Behaviour ===")
     c2_df = main_trials_df[(main_trials_df["condition"] == "C2")]
-    inspect_human_ai_match(c2_df, "global")
+    #inspect_human_ai_match(c2_df, "global")
     print(f"\n=== C3 Switching Behaviour ===")
     c3_df = main_trials_df[(main_trials_df["condition"] == "C3")]
-    inspect_human_ai_match(c3_df, "global")
+    #inspect_human_ai_match(c3_df, "global")
 
     print(f"\n=== Inspect Page Times ===")
     print(main_trials_df.groupby("condition")["mean_page_duration"].agg(["mean", "std", "count"]))
@@ -91,8 +93,107 @@ if __name__ == '__main__':
     mismatch_df = main_trials_df[
         main_trials_df["initial_agree_ai"] == 0
     ].copy()
-    print(mismatch_df['switched'].value_counts(normalize=True))
+    #print(mismatch_df['switched'].value_counts(normalize=True))
     #mismatch_df = mismatch_df[mismatch_df["shared_ai_confidence"].isin([2, 3])].copy()
+    mismatch_df= main_trials_df[
+        main_trials_df["initial_top_1_agree"] == 0
+    ].copy()
+
+    #mismatch_df = mismatch_df[mismatch_df["condition"].isin(["C2", "C1"])].copy()
+    print(mismatch_df[['initial_confidence_norm', 'shared_ai_norm']].describe())
+
+    print(f"\n=== Switched by AI Confidence + Initial Confidence ===")
+
+    model = smf.logit(
+        f"switched ~ confidence_gap * C(condition)",
+        data=mismatch_df
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": mismatch_df["participant_code"]}
+    )
+    print(model.summary())
+
+    model = smf.logit(
+        f"switched ~ confidence_gap + I(confidence_gap**2) * C(condition)",
+        data=mismatch_df
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": mismatch_df["participant_code"]}
+    )
+    print(model.summary())
+
+    model = smf.logit(
+        f"switched ~ C(initial_confidence_norm) * C(ai_not_low)",
+        data=mismatch_df
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": mismatch_df["participant_code"]}
+    )
+    print(model.summary())
+
+    model = smf.logit(
+        f"switched ~ ai_not_low * C(condition)",
+        data=mismatch_df
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": mismatch_df["participant_code"]}
+    )
+    print(model.summary())
+
+    model = smf.logit(
+        f"switched ~ initial_confidence_norm * C(condition)",
+        data=mismatch_df
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": mismatch_df["participant_code"]}
+    )
+    print(model.summary())
+
+    print(
+        pd.crosstab(
+            [mismatch_df["condition"], mismatch_df["shared_ai_confidence"]],
+            mismatch_df["switched"]
+        )
+    )
+
+    model = smf.logit(
+        f"switched ~ initial_confidence_norm + shared_ai_confidence",
+        data=mismatch_df
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": mismatch_df["participant_code"]}
+    )
+    print(model.summary())
+
+    model = smf.logit(
+        f"switched ~ initial_confidence_norm + shared_ai_confidence * C(condition)",
+        data=mismatch_df
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": mismatch_df["participant_code"]}
+    )
+    print(model.summary())
+
+
+    model = smf.logit(
+        f"switched ~ initial_confidence * shared_ai_confidence * C(condition)",
+        data=mismatch_df
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": mismatch_df["participant_code"]}
+    )
+    print(model.summary())
+
+    model = smf.logit(
+        f"switched ~ initial_confidence * C(condition) + shared_ai_confidence * C(condition)",
+        data=mismatch_df
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": mismatch_df["participant_code"]}
+    )
+    print(model.summary())
+
+
 
     print(f"\n=== A1: Switched by Condition ===")
     print(mismatch_df.groupby('condition')['switched'].describe())
@@ -142,6 +243,7 @@ if __name__ == '__main__':
         print(model.summary())
 
     print(f"\n=== Switched by AI Confidence + Initial Confidence ===")
+    print(model.summary())
     for condition in ["C1", "C2", "C3"]:
         condition_df = mismatch_df[mismatch_df["condition"] == condition]
 
@@ -425,3 +527,149 @@ if __name__ == '__main__':
     print(f"Chi2 statistic: {chi2:.4f}")
     print(f"p-value: {p:.6f}")
     print(f"Degrees of freedom: {dof}")
+
+    model = smf.logit(
+        "switched ~ initial_confidence + shared_ai_confidence",
+        data=c3_df
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": c3_df["participant_code"]}
+    )
+    print(model.summary())
+
+    model = smf.logit(
+        "switched ~ ai_correct",
+        data=c3_df
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": c3_df["participant_code"]}
+    )
+    print(model.summary())
+
+    print("=== C3: Switched based on initial position ===")
+    c3_top1_mismatch = mismatch_df[mismatch_df["condition"] == "C3"]
+    c3_top1_mismatch["moved_to_top1"] = (c3_top1_mismatch["final_pos_in_set"] == 1).astype(int)
+
+    print(c3_top1_mismatch.groupby("initial_pos_in_set")["switched"].describe())
+    print(c3_df.groupby("initial_pos_in_set")["switched"].describe())
+
+    model = smf.logit(
+        "switched ~ C(initial_pos_in_set)",
+        data=c3_top1_mismatch
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": c3_top1_mismatch["participant_code"]}
+    )
+    print(model.summary())
+
+    model = smf.logit(
+        "switched ~ C(initial_pos_in_set) + shared_ai_confidence + initial_confidence",
+        data=c3_top1_mismatch
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": c3_top1_mismatch["participant_code"]}
+    )
+    print(model.summary())
+
+    model = smf.logit(
+        "switched ~ C(initial_pos_in_set) + confidence_gap + initial_confidence",
+        data=c3_top1_mismatch
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": c3_top1_mismatch["participant_code"]}
+    )
+    print(model.summary())
+
+    model = smf.logit(
+        "switched ~ C(initial_pos_in_set) + initial_confidence",
+        data=c3_top1_mismatch
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": c3_top1_mismatch["participant_code"]}
+    )
+    print(model.summary())
+
+    model = smf.logit(
+        "switched ~ C(initial_pos_in_set) + confidence_gap",
+        data=c3_top1_mismatch
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": c3_top1_mismatch["participant_code"]}
+    )
+    print(model.summary())
+
+    model = smf.logit(
+        "switched ~ C(initial_pos_in_set) + shared_ai_confidence",
+        data=c3_top1_mismatch
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": c3_top1_mismatch["participant_code"]}
+    )
+    print(model.summary())
+
+    import pandas as pd
+
+    mismatch_df['gap_bin'] = pd.cut(mismatch_df['confidence_gap'], bins=10)
+    plot_df = mismatch_df.groupby('gap_bin')['switched'].mean().reset_index()
+    plot_df['gap_mid'] = plot_df['gap_bin'].apply(lambda x: x.mid)
+    import matplotlib.pyplot as plt
+
+    plt.figure()
+
+    plt.plot(plot_df['gap_mid'], plot_df['switched'], marker='o')
+
+    plt.xlabel('Confidence Gap (AI - Own)')
+    plt.ylabel('Probability of Switching')
+    plt.title('Switching Behavior vs Confidence Gap')
+
+    plt.axvline(0)  # key reference: AI = own confidence
+
+    #plt.show()
+
+    import pandas as pd
+
+    heatmap_df = mismatch_df.groupby(
+        ['initial_confidence_norm', 'shared_ai_norm']
+    )['switched'].mean().reset_index()
+    import pandas as pd
+
+    heatmap_pivot = heatmap_df.pivot(
+        index='initial_confidence_norm',
+        columns='shared_ai_norm',
+        values='switched'
+    )
+
+    import matplotlib.pyplot as plt
+
+    plt.figure()
+
+    plt.imshow(heatmap_pivot, aspect='auto')
+
+    plt.colorbar(label='Probability of Switching')
+
+    plt.xticks(range(len(heatmap_pivot.columns)), heatmap_pivot.columns)
+    plt.yticks(range(len(heatmap_pivot.index)), heatmap_pivot.index)
+
+    plt.xlabel('AI Confidence')
+    plt.ylabel('Initial Confidence')
+    plt.title('Switching Probability Heatmap')
+
+    plt.figure()
+
+    plt.imshow(heatmap_pivot, aspect='auto')
+    plt.colorbar(label='Probability of Switching')
+
+    for i in range(len(heatmap_pivot.index)):
+        for j in range(len(heatmap_pivot.columns)):
+            value = heatmap_pivot.iloc[i, j]
+            if pd.notna(value):
+                plt.text(j, i, f"{value:.2f}", ha='center', va='center')
+
+    plt.xticks(range(len(heatmap_pivot.columns)), heatmap_pivot.columns)
+    plt.yticks(range(len(heatmap_pivot.index)), heatmap_pivot.index)
+
+    plt.xlabel('AI Confidence')
+    plt.ylabel('Initial Confidence')
+    plt.title('Switching Probability by Confidence Levels')
+
+    plt.show()

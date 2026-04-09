@@ -1,5 +1,7 @@
 import pandas as pd
 import pingouin as pg
+import itertools
+from scipy.stats import chi2_contingency
 import sns
 import statsmodels.formula.api as smf
 import statsmodels.api as sm
@@ -12,6 +14,43 @@ from statsmodels.stats.multicomp import pairwise_tukeyhsd
 from data_loader import load_experiment_data
 from figures import plot_box_with_jitter, plot_binary_stacked_bar
 from variable_constructer import construct_trial_level_variables
+
+
+def pairwise_chi2_tests(table: pd.DataFrame, alpha=0.05):
+    """
+    Performs pairwise Chi-square tests between rows of a contingency table
+    with Bonferroni correction.
+
+    Parameters:
+        table (pd.DataFrame): contingency table (rows = groups, columns = outcomes)
+        alpha (float): significance level
+
+    Returns:
+        pd.DataFrame with results
+    """
+
+    conditions = table.index.tolist()
+    pairs = list(itertools.combinations(conditions, 2))
+
+    results = []
+    m = len(pairs)  # number of comparisons
+    alpha_corrected = alpha / m
+
+    for c1, c2 in pairs:
+        subtable = table.loc[[c1, c2]]
+
+        chi2, p, dof, expected = chi2_contingency(subtable)
+
+        results.append({
+            "Comparison": f"{c1} vs {c2}",
+            "Chi2": chi2,
+            "p-value": p,
+            "p-value (Bonferroni)": min(p * m, 1.0),
+            "Significant (uncorrected)": p < alpha,
+            "Significant (Bonferroni)": p < alpha_corrected
+        })
+
+    return pd.DataFrame(results), alpha_corrected
 
 
 def run_mixed_anova(df):
@@ -184,6 +223,17 @@ def inspect_reliance_based_on_condition(mismatch_df: pd.DataFrame):
 def inspect_appropriate_reliance_based_on_condition(df: pd.DataFrame, reliance_colum: str):
     print(df.groupby("condition")[reliance_colum].mean())
 
+    model = smf.logit(
+        f"{reliance_colum} ~ C(condition, Treatment(reference='C2')) + C(case_id)",
+        data=df
+    )
+    result = model.fit(
+        cov_type="cluster",
+        cov_kwds={"groups": df["participant_code"]},
+        disp=False
+    )
+    print(result.summary())
+
     table = pd.crosstab(
         df["condition"],
         df[reliance_colum]
@@ -196,6 +246,12 @@ def inspect_appropriate_reliance_based_on_condition(df: pd.DataFrame, reliance_c
     print("Chi-square:", chi2)
     print("p-value:", p)
     print("df:", dof)
+
+    print("\n=== Pairwise Chi-square (Bonferroni corrected) ===")
+    pairwise_results, alpha_corr = pairwise_chi2_tests(table)
+
+    print(f"Corrected alpha: {alpha_corr:.4f}")
+    print(pairwise_results)
 
     # additional to Cao et al.
     print("\n=== By Strategy ===")
@@ -379,6 +435,7 @@ if __name__ == '__main__':
     mismatch_df = main_trials_df[
         main_trials_df["initial_agree_ai"] == 0
         ].copy()
+
     # Cao et al. 4.3.1
     inspect_reliance_based_on_condition(mismatch_df)
 
@@ -398,7 +455,6 @@ if __name__ == '__main__':
 
     #added
     print("=== AI Confidence vs. AI Correctness ===")
-    # additional to Cao et al.
     model = smf.logit(
         f"final_agree_ai ~ ai_correct * shared_ai_confidence",
         data=mismatch_df,
@@ -406,6 +462,47 @@ if __name__ == '__main__':
     result = model.fit(
         cov_type="cluster",
         cov_kwds={"groups": mismatch_df["participant_code"]},
+        disp=False
+    )
+    print(result.summary())
+
+    # added
+    print("=== Initial Confidence vs. AI Correctness ===")
+    model = smf.logit(
+        f"final_agree_ai ~ ai_correct * initial_confidence",
+        data=mismatch_df,
+    )
+    result = model.fit(
+        cov_type="cluster",
+        cov_kwds={"groups": mismatch_df["participant_code"]},
+        disp=False
+    )
+    print(result.summary())
+
+    print("=== AI Confidence vs. AI Correctness ===")
+    model = smf.logit(
+        f"final_agree_ai ~ ai_correct * shared_ai_confidence",
+        data=mismatch_df,
+    )
+    result = model.fit(
+        cov_type="cluster",
+        cov_kwds={"groups": mismatch_df["participant_code"]},
+        disp=False
+    )
+    print(result.summary())
+
+    # added
+    c3_mismatch = mismatch_df[
+        mismatch_df["condition"] == "C3"
+    ].copy()
+    print("=== Initial pos in set vs. AI Correctness ===")
+    model = smf.logit(
+        f"final_agree_ai ~ ai_correct * initial_pos_in_set",
+        data=c3_mismatch,
+    )
+    result = model.fit(
+        cov_type="cluster",
+        cov_kwds={"groups": c3_mismatch["participant_code"]},
         disp=False
     )
     print(result.summary())
