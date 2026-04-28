@@ -4,8 +4,7 @@ from functools import cache
 import ast
 
 from config import RAW_DATA_DIR
-from variable_constructer import construct_trial_level_variables, \
-    create_participant_stats, add_consolidated_control_measures, create_case_stats
+from variable_constructer import construct_trial_level_variables, create_participant_stats
 
 PLAYER_COLUMNS_TO_DROP = {
     "id_in_group",
@@ -77,11 +76,9 @@ def _extract_trials(df, prefix, trials_df):
         if pd.isna(x):
             return []
 
-        # If the entire list is wrapped in quotes -> remove them
         if isinstance(x, str) and x.startswith('"') and x.endswith('"'):
             x = x[1:-1]
 
-        # Safely convert string representation of list into actual list
         try:
             parsed = ast.literal_eval(x)
             if isinstance(parsed, list):
@@ -91,13 +88,11 @@ def _extract_trials(df, prefix, trials_df):
         except (ValueError, SyntaxError):
             return []
 
-    # Apply parsing
     parsed_series = trials_df["cp_standard_sorted_set"].apply(parse_cp_set)
 
-    # Expand into three columns
     trials_df[["cp_set_el1", "cp_set_el2", "cp_set_el3"]] = (
         pd.DataFrame(parsed_series.tolist(), index=trials_df.index)
-        .reindex(columns=[0, 1, 2])  # ensures exactly 3 columns
+        .reindex(columns=[0, 1, 2])
     )
 
     if "case_id" in df_trials.columns and "case_id" in trials_df.columns:
@@ -167,15 +162,12 @@ def load_experiment_data(file_name: str) -> pd.DataFrame:
             _extract_single_block(df_raw, "cognitive_load", "mental_load_mental"),
             _extract_single_block(df_raw, "control_measures", "age"),
             on="participant_code")
-    control_measures_df = add_consolidated_control_measures(control_measures_df)
     participant_stats = create_participant_stats(main_trials_df)
-    case_stats = create_case_stats(main_trials_df)
 
     return (
         main_trials_df,
         control_measures_df,
         participant_stats,
-        case_stats,
         _get_participants_df(df_raw),
         example_trials_df,
     )

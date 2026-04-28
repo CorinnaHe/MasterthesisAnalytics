@@ -1,3 +1,6 @@
+import pandas as pd
+from scipy.stats import chi2_contingency
+
 from data_loader import load_experiment_data
 import statsmodels.formula.api as smf
 
@@ -58,3 +61,23 @@ if __name__ == '__main__':
     print(switch_model.summary())
 
     plot_calibration_switching(top1_mismatch_df, "top1_correct", "switched")
+
+    print("=== C3: Switching is directed to Top-1 ===")
+    c3_switched = main_trials_df[
+        (main_trials_df["switched"] == 1) & (main_trials_df["condition"] == "C3")
+        ].copy()
+    c3_switched["moved_to_top1"] = (c3_switched["final_pos_in_set"] == 1).astype(int)
+    print(c3_switched["moved_to_top1"].mean())
+
+    table_counts = pd.crosstab(
+        c3_switched["initial_pos_in_set"],
+        c3_switched["moved_to_top1"]
+    )
+    table_counts.columns = ["not_moved_to_top1", "moved_to_top1"]
+    chi2, p, dof, expected = chi2_contingency(
+        table_counts[["not_moved_to_top1", "moved_to_top1"]]
+    )
+    print("\n=== Chi-square test ===")
+    print(f"Chi2 statistic: {chi2:.4f}")
+    print(f"p-value: {p:.6f}")
+    print(f"Degrees of freedom: {dof}")
