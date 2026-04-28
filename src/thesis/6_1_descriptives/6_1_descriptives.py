@@ -1,17 +1,14 @@
-from scipy.stats import ttest_ind
 from scipy.stats import kruskal
 import pandas as pd
 from scipy.stats import chi2_contingency
 
 from data_loader import load_experiment_data
-from thesis.figure_creation import plot_binary_rate_per_condition, plot_switching_rate, \
-    plot_initial_final_per_condition, plot_initial_vs_final_agreement
+from thesis.figure_creation import plot_switching_rate
 
 
-def full_balance_table(df: pd.DataFrame):
+def balance_test_across_conditions(df: pd.DataFrame):
     rows = []
 
-    # Continuous
     numeric_cols = [
         "age",
         "ai_literacy_sk9",
@@ -36,7 +33,6 @@ def full_balance_table(df: pd.DataFrame):
 
         rows.append(row)
 
-    # Categorical
     categorical_vars = ["gender", "education", "domain_experience"]
 
     for var in categorical_vars:
@@ -60,7 +56,7 @@ def full_balance_table(df: pd.DataFrame):
 
     return pd.DataFrame(rows)
 
-def print_statistics(df: pd.DataFrame):
+def print_control_measures(df: pd.DataFrame):
     numeric_cols = [
         "age",
         "ai_literacy_sk9",
@@ -100,14 +96,6 @@ def print_statistics(df: pd.DataFrame):
     })
     print(domain_experience_summary)
 
-    print("=== Across Conditions ===")
-    with pd.option_context(
-            "display.max_rows", None,
-            "display.max_columns", None
-    ):
-        print(full_balance_table(df))
-
-
     for var in numeric_cols:
         groups = [
             df[df["condition"] == "C1"][var],
@@ -139,7 +127,7 @@ if __name__ == '__main__':
     condition_df = (
         main_trials_df
         .groupby('participant_code')['condition']
-        .first()  # or another aggregation if needed
+        .first()
         .reset_index()
     )
 
@@ -173,12 +161,10 @@ if __name__ == '__main__':
     print(main_trials_df.groupby('condition')['initial_correct'].describe())
     print("> Final Accuracy by Condition")
     print(main_trials_df.groupby('condition')['final_correct'].describe())
-    #plot_binary_rate_per_condition(main_trials_df, column="final_correct", y_label="Accuracy")
 
     print("=== Switched Descriptives ===")
     print("> Switched by Condition (full df)")
     print(main_trials_df.groupby('condition')['switched'].describe())
-    #plot_binary_rate_per_condition(main_trials_df, column="switched", y_label="Switched Rate")
 
     print("> Switching Rate by Top_1 AI Agree")
     print(main_trials_df.groupby('initial_top_1_agree')['switched'].describe())
@@ -191,18 +177,6 @@ if __name__ == '__main__':
         x_label="Initial Human–AI Match with Top-Ranked Position",
         y_label="Switching Rate (%)"
     )
-
-    for condition, df_cond in main_trials_df.groupby('condition'):
-        print(f"\n--- Condition: {condition} ---")
-
-        plot_switching_rate(
-            df=df_cond,
-            group_col="initial_top_1_agree",
-            switch_col="switched",
-            x_label="Initial Human–AI Match",
-            y_label="Switch (%)",
-        )
-
     print("> Switched by Condition (top 1 mismatch df)")
     print(top1_mismatch_df.groupby('condition')['switched'].describe())
 
@@ -222,8 +196,6 @@ if __name__ == '__main__':
     print("=== Final Agreement Rates ===")
     print(main_trials_df.groupby('condition')['final_agree_ai'].describe())
 
-    #plot_initial_vs_final_agreement(main_trials_df)
-
     print("=== Human Confidence===")
     print("> Initial Confidence by Condition")
     print(main_trials_df.groupby('condition')['initial_confidence'].describe())
@@ -234,7 +206,15 @@ if __name__ == '__main__':
     print("> by Condition")
     print(main_trials_df.groupby('condition')['shared_ai_confidence'].describe())
 
-    print_statistics(control_measures_df)
+    print("=== Control Measures ===")
+    print("> Full set distribution")
+    print_control_measures(control_measures_df)
+    print("> Balance Checks across conditions")
+    with pd.option_context(
+            "display.max_rows", None,
+            "display.max_columns", None
+    ):
+        print(balance_test_across_conditions(control_measures_df))
 
     print("=== AI Attitude ===")
     print("> by Condition")

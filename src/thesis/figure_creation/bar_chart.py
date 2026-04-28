@@ -392,7 +392,7 @@ def plot_reliance_comparison(
     plt.tight_layout()
     plt.show()
 
-
+# The following function was generated using ChatGPT 5.3
 def plot_switching_rate(
     df: pd.DataFrame,
     group_col: str,
@@ -400,12 +400,10 @@ def plot_switching_rate(
     x_label: str = "Initial Human–AI Match",
     y_label: str = "Switch (%)",
 ):
-    # --- Mapping ---
     label_map = {0: "Match", 1: "Mismatch"}
     df = df.copy()
     df[group_col] = df[group_col].map(label_map)
 
-    # --- Aggregate ---
     counts = (
         df.groupby([group_col, switch_col])
         .size()
@@ -422,7 +420,6 @@ def plot_switching_rate(
     totals = counts.sum(axis=1)
     props = counts.div(totals, axis=0)
 
-    # --- Style ---
     plt.rcParams.update({
         "font.family": "sans-serif",
         "font.size": 11,
@@ -437,7 +434,6 @@ def plot_switching_rate(
     x = np.arange(len(counts))
     bar_width = 0.45
 
-    # --- Colors ---
     not_switch_color = "#AFC3C2"
     switch_color = "#593032"
 
@@ -448,7 +444,6 @@ def plot_switching_rate(
         p_sw = props.iloc[i, 1]
         left = x[i] - bar_width / 2
 
-        # --- 1. Full bar (rounded, switch color) ---
         full_bar = FancyBboxPatch(
             (left, 0),
             bar_width,
@@ -460,7 +455,6 @@ def plot_switching_rate(
         )
         ax.add_patch(full_bar)
 
-        # --- 2. Overlay NOT SWITCH (flat rectangle) ---
         ax.add_patch(Rectangle(
             (left, 0),
             bar_width,
@@ -470,7 +464,6 @@ def plot_switching_rate(
             zorder=2
         ))
 
-        # --- Labels ---
         n_not = counts.iloc[i, 0]
         n_sw = counts.iloc[i, 1]
 
@@ -486,7 +479,6 @@ def plot_switching_rate(
 
         if n_sw > 0:
             if p_sw < 0.12:
-                # label above
                 label_y = 1.04
 
                 ax.text(
@@ -498,7 +490,6 @@ def plot_switching_rate(
                     fontsize=10
                 )
 
-                # --- connector line ---
                 ax.plot(
                     [x[i], x[i]],
                     [p_not + p_sw / 2, label_y - 0.01],
@@ -518,7 +509,6 @@ def plot_switching_rate(
                     color="white"
                 )
 
-    # --- Axes ---
     ax.set_xlim(-0.5, len(x) - 0.5)
     ax.set_ylim(0, 1.08)
 
@@ -534,7 +524,6 @@ def plot_switching_rate(
     ax.grid(axis="y", linestyle="-", alpha=0.2)
     ax.set_axisbelow(True)
 
-    # --- Legend ---
     ax.legend(
         handles=[
             plt.Rectangle((0, 0), 1, 1, color=not_switch_color),
