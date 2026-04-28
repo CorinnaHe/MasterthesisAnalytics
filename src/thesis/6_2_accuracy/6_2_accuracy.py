@@ -1,7 +1,7 @@
 from data_loader import load_experiment_data
 import statsmodels.formula.api as smf
 
-from thesis.figure_creation import plot_initial_final_per_condition
+from thesis.figure_creation import plot_initial_final_accuracy_per_condition
 
 if __name__ == '__main__':
     experiment_date = "2026-03-20"
@@ -15,7 +15,7 @@ if __name__ == '__main__':
     print(main_trials_df.groupby('condition')['final_correct'].describe())
 
     print("=== Accuracy Figures ===")
-    plot_initial_final_per_condition(main_trials_df, "initial_correct", "final_correct", y_label="Initial vs. Final Accuracy")
+    plot_initial_final_accuracy_per_condition(main_trials_df, "initial_correct", "final_correct", y_label="Initial vs. Final Accuracy")
 
     print("=== A1a: Logistic Regression correct ~ condition ===")
     model = smf.logit(

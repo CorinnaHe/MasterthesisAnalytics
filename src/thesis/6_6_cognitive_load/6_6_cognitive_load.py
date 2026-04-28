@@ -1,8 +1,6 @@
 from data_loader import load_experiment_data
 import statsmodels.formula.api as smf
 
-
-
 if __name__ == '__main__':
     experiment_date = "2026-03-20"
     (
@@ -14,7 +12,7 @@ if __name__ == '__main__':
     condition_df = (
         main_trials_df
         .groupby('participant_code')['condition']
-        .first()  # or another aggregation if needed
+        .first()
         .reset_index()
     )
 
