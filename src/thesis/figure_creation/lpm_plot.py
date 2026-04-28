@@ -1,0 +1,142 @@
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from matplotlib.patches import FancyBboxPatch
+
+
+def plot_predicted_accuracy_lpm_ci(
+    model,
+    title: str | None = None,
+):
+    """
+    Plots predicted probabilities with proper confidence intervals
+    using statsmodels get_prediction() (delta method).
+    """
+
+    # --- Define scenarios ---
+    condition_value = model.model.data.frame["condition"].iloc[0]
+
+    pred_df = pd.DataFrame({
+        "switched": [0, 1, 0, 1],
+        "top1_correct": [0, 0, 1, 1],
+        "condition": [condition_value] * 4
+    })
+
+    # --- Get predictions with CI ---
+    pred_res = model.get_prediction(pred_df).summary_frame(alpha=0.05)
+
+    pred_df["mean"] = pred_res["mean"]
+    pred_df["ci_lower"] = pred_res["mean_ci_lower"]
+    pred_df["ci_upper"] = pred_res["mean_ci_upper"]
+
+    # Clip to [0,1]
+    pred_df[["mean", "ci_lower", "ci_upper"]] = pred_df[
+        ["mean", "ci_lower", "ci_upper"]
+    ].clip(0, 1)
+
+    # --- Map labels ---
+    pred_df["AI"] = pred_df["top1_correct"].map({
+        0: "Incorrect",
+        1: "Correct"
+    })
+    pred_df["Switch"] = pred_df["switched"].map({
+        0: "Not Switched",
+        1: "Switched"
+    })
+
+    # --- Plot setup ---
+    categories = ["Incorrect", "Correct"]
+    x = np.arange(len(categories))
+    bar_width = 0.30
+
+    # --- Colors (your refined palette) ---
+    init_color = "#AFC3C2"   # Not switched
+    final_color = "#6F8489"  # Switched
+    ci_color = "#593032"
+
+    plt.rcParams.update({
+        "font.family": "sans-serif",
+        "font.size": 11,
+        "axes.spines.top": False,
+        "axes.spines.right": False,
+        "axes.spines.left": False,
+        "axes.spines.bottom": False,
+    })
+
+    fig, ax = plt.subplots(figsize=(7, 4.5))
+
+    # --- Draw bars + CI ---
+    for i, cat in enumerate(categories):
+        subset = pred_df[pred_df["AI"] == cat]
+
+        for j, (_, row) in enumerate(subset.iterrows()):
+            center = x[i] + (-bar_width/2 if j == 0 else bar_width/2)
+            left = center - bar_width/2
+
+            color = init_color if row["Switch"] == "Not Switched" else final_color
+
+            # Bar
+            rect = FancyBboxPatch(
+                (left, 0),
+                bar_width,
+                row["mean"],
+                boxstyle="round,pad=0,rounding_size=0.02",
+                linewidth=0,
+                facecolor=color
+            )
+            ax.add_patch(rect)
+
+            # CI (true!)
+            ax.vlines(
+                center,
+                row["ci_lower"],
+                row["ci_upper"],
+                colors=ci_color,
+                linewidth=4,
+                capstyle="round",
+                zorder=3
+            )
+
+            # Label
+            label = f"{row['mean'] * 100:.2f}".rstrip("0").rstrip(".") + "%"
+
+            ax.text(
+                center,
+                row["ci_upper"] + 0.05,
+                label,
+                ha="center",
+                va="bottom",
+                fontsize=10
+            )
+
+    # --- Axes ---
+    ax.set_xlim(-0.5, len(x) - 0.5)
+    ax.set_ylim(0, 1)
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(categories)
+
+    ax.set_ylabel("Predicted Probability of Correct Decision")
+    ax.set_xlabel("AI Correctness (Top-1)")
+
+    if title:
+        ax.set_title(title, pad=12)
+
+    # --- Clean look ---
+    ax.tick_params(axis='y', length=0)
+    ax.tick_params(axis='x', length=0)
+    ax.grid(axis="y", linestyle="-", alpha=0.2)
+    ax.set_axisbelow(True)
+
+    # --- Legend ---
+    ax.legend(
+        handles=[
+            plt.Rectangle((0, 0), 1, 1, color=init_color),
+            plt.Rectangle((0, 0), 1, 1, color=final_color),
+        ],
+        labels=["Not Switched", "Switched"],
+        frameon=False
+    )
+
+    plt.tight_layout()
+    plt.show()

@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     # variables
     print(f"\n=== General Switching Behaviour ===")
-    #inspect_human_ai_match(main_trials_df, "global")
+    inspect_human_ai_match(main_trials_df, "global")
     print(f"\n=== C1 Switching Behaviour ===")
     c1_df = main_trials_df[(main_trials_df["condition"] == "C1")]
     #inspect_human_ai_match(c1_df, "global")
@@ -101,6 +101,25 @@ if __name__ == '__main__':
 
     #mismatch_df = mismatch_df[mismatch_df["condition"].isin(["C2", "C1"])].copy()
     print(mismatch_df[['initial_confidence_norm', 'shared_ai_norm']].describe())
+
+    print("=== AI Confidence matters more in C3??? ===")
+    model = smf.logit(
+        f"switched ~ initial_confidence_norm + shared_ai_confidence * C(condition)",
+        data=mismatch_df
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": mismatch_df["participant_code"]}
+    )
+    print(model.summary())
+
+    model = smf.logit(
+        f"switched ~ shared_ai_confidence * C(condition)",
+        data=mismatch_df
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": mismatch_df["participant_code"]}
+    )
+    print(model.summary())
 
     print(f"\n=== Switched by AI Confidence + Initial Confidence ===")
 
@@ -315,6 +334,26 @@ if __name__ == '__main__':
         )
         print(f"\n===== {condition.upper()} =====")
         print(model.summary())
+
+    print(f"\n=== Switched by shared_ai_confidence * Condition ===")
+    model = smf.logit(
+        f"switched ~ shared_ai_confidence * C(condition)",
+        data=mismatch_df
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": mismatch_df["participant_code"]}
+    )
+    print(model.summary())
+
+    print(f"\n=== Switched by initial_confidence * Condition ===")
+    model = smf.logit(
+        f"switched ~ initial_confidence * C(condition)",
+        data=mismatch_df
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": mismatch_df["participant_code"]}
+    )
+    print(model.summary())
 
     print(f"\n=== Switched by Confidence Gap * Condition ===")
     model = smf.logit(

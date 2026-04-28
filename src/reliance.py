@@ -16,7 +16,7 @@ from figures import plot_box_with_jitter, plot_binary_stacked_bar
 from variable_constructer import construct_trial_level_variables
 
 
-def pairwise_chi2_tests(table: pd.DataFrame, alpha=0.05):
+def pairwise_chi2_tests(table: pd.DataFrame, alpha=0.1):
     """
     Performs pairwise Chi-square tests between rows of a contingency table
     with Bonferroni correction.
@@ -224,7 +224,7 @@ def inspect_appropriate_reliance_based_on_condition(df: pd.DataFrame, reliance_c
     print(df.groupby("condition")[reliance_colum].mean())
 
     model = smf.logit(
-        f"{reliance_colum} ~ C(condition, Treatment(reference='C2')) + C(case_id)",
+        f"{reliance_colum} ~ C(condition) + C(case_id)",
         data=df
     )
     result = model.fit(
@@ -238,7 +238,6 @@ def inspect_appropriate_reliance_based_on_condition(df: pd.DataFrame, reliance_c
         df["condition"],
         df[reliance_colum]
     )
-
     print(table)
 
     chi2, p, dof, expected = stats.chi2_contingency(table)
@@ -254,8 +253,8 @@ def inspect_appropriate_reliance_based_on_condition(df: pd.DataFrame, reliance_c
     print(pairwise_results)
 
     # additional to Cao et al.
-    print("\n=== By Strategy ===")
-    print(df.groupby(["condition", "strategy"])[reliance_colum].mean())
+    #print("\n=== By Strategy ===")
+    #print(df.groupby(["condition", "strategy"])[reliance_colum].mean())
 
     model = smf.logit(
         f"{reliance_colum} ~ C(condition) * C(strategy)",
@@ -266,7 +265,7 @@ def inspect_appropriate_reliance_based_on_condition(df: pd.DataFrame, reliance_c
         cov_kwds={"groups": df["participant_code"]},
         disp=False
     )
-    print(result.summary())
+    #print(result.summary())
 
     model = smf.logit(
         f"{reliance_colum} ~ confidence_gap * C(condition)",
@@ -277,7 +276,7 @@ def inspect_appropriate_reliance_based_on_condition(df: pd.DataFrame, reliance_c
         cov_kwds={"groups": df["participant_code"]},
         disp=False
     )
-    print(result.summary())
+    #print(result.summary())
 
 
 def inspect_confidence_change_based_on_condition(cases):
@@ -430,14 +429,14 @@ if __name__ == '__main__':
     main_trials_df["final_agree_ai"] = main_trials_df["final_agree_ai"].astype(int)
 
     # Cao et al. 4.2
-    inspect_human_ai_match(main_trials_df, "general")
+    #inspect_human_ai_match(main_trials_df, "general")
 
     mismatch_df = main_trials_df[
         main_trials_df["initial_agree_ai"] == 0
         ].copy()
 
     # Cao et al. 4.3.1
-    inspect_reliance_based_on_condition(mismatch_df)
+    #inspect_reliance_based_on_condition(mismatch_df)
 
     # Cao et al. 4.3.2 -> Overreliance
     print("=== Overreliance ===")
@@ -528,5 +527,4 @@ if __name__ == '__main__':
     # Cao et al. 5
     main_trials_control_measures_df = main_trials_df.merge(control_measures_df, on='participant_code', how='left') # join control measures
     inspect_switching_behaviour(main_trials_control_measures_df)
-
 

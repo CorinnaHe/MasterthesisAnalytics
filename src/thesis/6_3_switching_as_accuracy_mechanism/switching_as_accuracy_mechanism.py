@@ -1,0 +1,60 @@
+from data_loader import load_experiment_data
+import statsmodels.formula.api as smf
+
+from thesis.figure_creation import plot_predicted_accuracy_lpm_ci
+from thesis.figure_creation.bar_chart import plot_calibration_switching
+
+if __name__ == '__main__':
+    experiment_date = "2026-03-20"
+    (
+        main_trials_df,
+        *_
+    ) = load_experiment_data(f"all_apps_wide-{experiment_date}.csv")
+
+    mismatch_df = main_trials_df[
+        main_trials_df["initial_agree_ai"] == 0
+        ].copy()
+
+    top1_mismatch_df = main_trials_df[
+        main_trials_df["initial_top_1_agree"] == 0
+        ].copy()
+
+    print("=== Switching Descriptives (Full df) ===")
+    print(main_trials_df.groupby('condition')['switched'].describe())
+    print("=== Switching Descriptives (Top1 mismatch df) ===")
+    print(top1_mismatch_df.groupby('condition')['switched'].describe())
+    print(
+        top1_mismatch_df[top1_mismatch_df['switched'] == 1]
+        .groupby('condition')['final_agree_ai']
+        .agg(['sum', 'mean', 'count'])
+    )
+    print("=== Switching Descriptives (Complete mismatch df) ===")
+    print(mismatch_df.groupby('condition')['switched'].describe())
+    print(
+        mismatch_df[mismatch_df['switched'] == 1]
+        .groupby('condition')['final_agree_ai']
+        .agg(['sum', 'mean', 'count'])
+    )
+
+    print("=== A14: OLS switched * top1_correct + C(condition) (Top1 mismatch df) ===")
+    model = smf.ols(
+        "final_correct ~ switched * top1_correct + C(condition)",
+        data=top1_mismatch_df
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": top1_mismatch_df["participant_code"]}
+    )
+    print(model.summary())
+
+    plot_predicted_accuracy_lpm_ci(
+        model, )
+
+    print("=== Additional Analysis: OLS final_correct ~ switched * C(condition) (Full df) ===")
+    switch_model = smf.logit(
+        "final_correct ~ switched * C(condition)",
+        data=top1_mismatch_df
+    ).fit(cov_type="cluster",
+          cov_kwds={"groups": top1_mismatch_df["participant_code"]})
+    print(switch_model.summary())
+
+    plot_calibration_switching(top1_mismatch_df, "top1_correct", "switched")

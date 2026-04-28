@@ -56,7 +56,7 @@ if __name__ == '__main__':
     )
     print(result)
 
-    #inspect_human_ai_match(main_trials_df, "global")
+    inspect_human_ai_match(main_trials_df, "global")
     #test_initial_ai_agree_and_switching_regulate_confidence(main_trials_df)
 
 

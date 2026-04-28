@@ -44,6 +44,13 @@ def _construct_reliance_metrics(trials: pd.DataFrame) -> pd.DataFrame:
         trials["set_based_correct"]
     )
 
+    trials["top1_correct"] = np.where(
+        trials["condition"].isin(["C1", "C2"]),
+        trials["ai_correct"],
+        trials["cp_set_el1"].eq(trials["y_true"])
+    ).astype(int)
+
+
     # human-ai agreement
     trials["initial_agree_ai"] = pd.NA
     trials["final_agree_ai"] = pd.NA
@@ -181,6 +188,15 @@ def _construct_reliance_metrics(trials: pd.DataFrame) -> pd.DataFrame:
 
     trials["switched_to_or_within_ai"] = (
         trials["switched"] & trials["final_agree_ai"]
+    ).astype(int)
+
+    trials["switched_to_top1"] = np.where(
+        trials["condition"].isin(["C1", "C2"]),
+        trials["switched_to_ai"],
+        (
+                (trials["initial_decision"] != trials["final_decision"]) &
+                trials["final_decision"].eq(trials["cp_set_el1"])
+        )
     ).astype(int)
 
     # reliance

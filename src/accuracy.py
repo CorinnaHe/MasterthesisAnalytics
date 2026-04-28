@@ -180,4 +180,59 @@ if __name__ == '__main__':
     print(model.summary())
 
 
+    print("=== Does Switching Drives Accuracy ===")
+    mismatch_df = main_trials_df[
+        main_trials_df["initial_top_1_agree"] == 0
+        ].copy()
 
+    switch_model = smf.logit(
+        "final_correct ~ switched * C(condition)",
+        data=mismatch_df
+    ).fit(cov_type="cluster",
+          cov_kwds={"groups": mismatch_df["participant_code"]})
+    print(switch_model.summary())
+
+    switch_model = smf.logit(
+        "final_correct ~ switched * ai_correct + C(condition)",
+        data=mismatch_df
+    ).fit(cov_type="cluster",
+          cov_kwds={"groups": mismatch_df["participant_code"]})
+    print(switch_model.summary())
+
+
+    model = smf.ols(
+        "final_correct ~ switched * top1_correct + C(condition)",
+        data=mismatch_df
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": mismatch_df["participant_code"]}
+    )
+    print(model.summary())
+
+    switch_model = smf.logit(
+        "final_correct ~ switched_to_top1 * top1_correct + C(condition)",
+        data=mismatch_df
+    ).fit(cov_type="cluster",
+          cov_kwds={"groups": mismatch_df["participant_code"]})
+    print(switch_model.summary())
+
+    model = smf.ols(
+        "final_correct ~ switched_to_top1 * top1_correct + C(condition)",
+        data=mismatch_df
+    ).fit(
+        cov_type="cluster",
+        cov_kwds={"groups": mismatch_df["participant_code"]}
+    )
+    print(model.summary())
+
+    print("=== Does Reliance Drives Accuracy ===")
+    mismatch_df = main_trials_df[
+        main_trials_df["initial_top_1_agree"] == 0
+        ].copy()
+
+    switch_model = smf.logit(
+        "final_correct ~ appropriate_reliance * C(condition)",
+        data=mismatch_df
+    ).fit(cov_type="cluster",
+          cov_kwds={"groups": mismatch_df["participant_code"]})
+    print(switch_model.summary())
